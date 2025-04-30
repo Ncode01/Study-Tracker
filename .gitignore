@@ -1,0 +1,58 @@
+# Dependencies
+/node_modules
+/client/node_modules
+/server/node_modules
+
+# Production build folders
+/client/build
+/client/dist
+/server/dist
+/build
+/dist
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+/server/.env
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+/server/logs
+*.log
+
+# IDE files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.vs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Testing
+/coverage
+/client/coverage
+
+# Misc
+.cache/
+/client/.cache
+.eslintcache
+/client/.eslintcache
+
+# TypeScript
+*.tsbuildinfo
+
+# MongoDB local data
+/data
