@@ -1,7 +1,6 @@
-// src/styles/theme.ts
-import { defineConfig } from '@chakra-ui/react';
+import { extendTheme } from '@chakra-ui/react';
 
-const theme = defineConfig({
+const theme = extendTheme({
   colors: {
     brand: {
       50: '#e6f7ff',
@@ -25,7 +24,7 @@ const theme = defineConfig({
   },
   styles: {
     global: {
-      'body': {
+      body: {
         bg: 'gray.800',
         color: 'whiteAlpha.900',
       }
