@@ -17,14 +17,14 @@ import {
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import { CSVLink } from 'react-csv';
-import { format, subDays, startOfWeek, addWeeks } from 'date-fns';
+import { format, subDays, startOfWeek } from 'date-fns';
 import { FaDownload, FaFire } from 'react-icons/fa';
 import { useAppStore } from '../../store/appStore';
 import { SessionFilters } from './SessionFilters';
 import { WeeklySummaryChart } from './WeeklySummaryChart';
 import { StudyHeatmap } from './StudyHeatmap';
 import { SessionDetailsModal } from './SessionDetailsModal';
-import { LoggedSession, SessionFilters as SessionFiltersType, WeeklySummary } from '../../types';
+import type { LoggedSession, SessionFilters as SessionFiltersType, WeeklySummary } from '../../types';
 
 const MotionBox = motion(Box);
 
@@ -327,7 +327,7 @@ export const HistoryView: React.FC = () => {
                   bg="gray.700"
                   cursor="pointer"
                   _hover={{ transform: "translateY(-2px)", boxShadow: "md" }}
-                  transition="all 0.2s"
+                  transition={{ duration: 0.2 }}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
                 >

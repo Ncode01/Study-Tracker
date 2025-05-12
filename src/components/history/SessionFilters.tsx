@@ -16,7 +16,7 @@ import {
 } from '@chakra-ui/react';
 import { FaFilter, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { useAppStore } from '../../store/appStore';
-import { SessionFilters as SessionFiltersType } from '../../types';
+import type { SessionFilters as SessionFiltersType } from '../../types';
 
 interface SessionFiltersProps {
   filters: SessionFiltersType;

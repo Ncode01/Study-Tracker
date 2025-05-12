@@ -5,11 +5,10 @@ import {
   Text,
   Heading,
   Flex,
-  useColorModeValue,
-  Tooltip
+  useColorModeValue
 } from '@chakra-ui/react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
-import { WeeklySummary } from '../../types';
+import type { WeeklySummary } from '../../types';
 
 interface WeeklySummaryChartProps {
   data: WeeklySummary[];

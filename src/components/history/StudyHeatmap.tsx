@@ -4,14 +4,13 @@ import {
   Box,
   Flex,
   Text,
-  Tooltip,
   useColorModeValue,
   VStack,
   HStack,
-  useTheme
+  Tooltip
 } from '@chakra-ui/react';
-import { format, parseISO, eachDayOfInterval, subDays, addDays, startOfWeek, isSameDay } from 'date-fns';
-import { LoggedSession } from '../../types';
+import { format, eachDayOfInterval, subDays, addDays, startOfWeek, isSameDay } from 'date-fns';
+import type { LoggedSession } from '../../types';
 
 interface StudyHeatmapProps {
   sessions: LoggedSession[];
@@ -26,11 +25,9 @@ export const StudyHeatmap: React.FC<StudyHeatmapProps> = ({
   startDate,
   endDate
 }) => {
-  const theme = useTheme();
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const textColor = useColorModeValue('gray.600', 'gray.300');
-  const dayBgColor = useColorModeValue('gray.100', 'gray.700');
   
   // Define intensity colors
   const intensityColors = [
