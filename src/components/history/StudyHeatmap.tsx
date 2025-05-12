@@ -16,11 +16,15 @@ import { LoggedSession } from '../../types';
 interface StudyHeatmapProps {
   sessions: LoggedSession[];
   daysToShow?: number;
+  startDate?: Date;
+  endDate?: Date;
 }
 
 export const StudyHeatmap: React.FC<StudyHeatmapProps> = ({ 
   sessions, 
-  daysToShow = 60  // Default to showing 60 days
+  daysToShow = 60,  // Default to showing 60 days
+  startDate,
+  endDate
 }) => {
   const theme = useTheme();
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -38,14 +42,17 @@ export const StudyHeatmap: React.FC<StudyHeatmapProps> = ({
     useColorModeValue('blue.500', 'blue.400'),   // Level 5 (darkest)
   ];
 
-  // Generate date range for the heatmap
+  // Generate date range for the heatmap - use custom date range if provided
   const today = new Date();
   const dateRange = useMemo(() => {
+    const start = startDate || subDays(today, daysToShow);
+    const end = endDate || today;
+    
     return eachDayOfInterval({
-      start: subDays(today, daysToShow),
-      end: today
+      start,
+      end
     });
-  }, [daysToShow, today]);
+  }, [daysToShow, today, startDate, endDate]);
 
   // Group sessions by date
   const sessionsByDate = useMemo(() => {
