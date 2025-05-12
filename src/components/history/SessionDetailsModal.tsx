@@ -29,7 +29,7 @@ import {
   IconButton
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
-import { FaClock, FaBook, FaListUl, FaNoteSticky, FaCalendarDay, FaEdit, FaSave, FaTimes } from 'react-icons/fa6';
+import { FaClock, FaBook, FaListUl, FaNoteSticky, FaCalendarDay, FaSave, FaTimes, FaEdit } from 'react-icons/fa';
 import { useAppStore } from '../../store/appStore';
 import { LoggedSession, Subject } from '../../types';
 
