@@ -517,7 +517,7 @@ export const useAppStore = create<AppState>()(
       name: 'study-tracker-storage',
       storage: createJSONStorage(() => localStorage),
       // Only persist the base app data, not auth state
-      partialize: (state) => ({
+      partialize: () => ({
         // We don't store auth here since we handle it separately
         // via user-specific localStorage entries
       }),
