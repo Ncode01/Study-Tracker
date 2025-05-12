@@ -267,10 +267,10 @@ if (typeof window !== 'undefined') {
 }
 
 // Listen for Firebase auth state changes
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let authUnsubscribe: (() => void) | null = null;
 if (typeof window !== 'undefined') {
-  authUnsubscribe = AuthService.subscribeToAuthChanges(async (firebaseUser: FirebaseUser | null) => {
+  // We're declaring this variable but not using it directly - we keep the subscription active
+  // for the lifetime of the application to listen for auth state changes
+  AuthService.subscribeToAuthChanges(async (firebaseUser: FirebaseUser | null) => {
     const store = useAppStore.getState();
     
     if (firebaseUser) {
@@ -657,9 +657,12 @@ export const useAppStore = create<AppState>()(
         // Sync with Firebase if online
         if (state.isOnline && state.auth.currentUser && updatedTask) {
           try {
-            await FirestoreService.updateTask(taskId, { 
-              completed: updatedTask.completed as boolean 
-            });
+            // Use definite type assertion since we've already checked it's not null
+            const taskUpdate = {
+              completed: (updatedTask as Task).completed
+            };
+            
+            await FirestoreService.updateTask(taskId, taskUpdate);
             
             // Update user points in Firestore
             if (pointsEarned > 0) {

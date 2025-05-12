@@ -4,7 +4,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  User as FirebaseUser
+  type User as FirebaseUser
 } from 'firebase/auth';
 import { auth } from './config';
 import { createUserProfile } from './firestore';
