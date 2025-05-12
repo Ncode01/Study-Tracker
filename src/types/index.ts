@@ -26,6 +26,9 @@ export interface LoggedSession {
   notes?: string;
   focusScore?: number; // AI-powered metric
   distractionsLogged?: number; // Number of distractions during session
+  tasksCompleted?: string[]; // List of completed tasks during the session
+  materials?: string[]; // Study materials used
+  tags?: string[]; // Tags associated with the session
 }
 
 // User authentication

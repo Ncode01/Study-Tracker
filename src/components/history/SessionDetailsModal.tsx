@@ -29,9 +29,9 @@ import {
   IconButton
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
-import { FaClock, FaBook, FaListUl, FaNoteSticky, FaCalendarDay, FaEdit, FaSave, FaTimes } from 'react-icons/fa6';
+import { FaClock, FaBook, FaListUl, FaNoteSticky, FaCalendarDay, FaPenToSquare, FaFloppyDisk, FaXmark } from 'react-icons/fa6';
 import { useAppStore } from '../../store/appStore';
-import { LoggedSession, Subject } from '../../types';
+import type { LoggedSession, Subject } from '../../types';
 
 interface SessionDetailsModalProps {
   isOpen: boolean;
@@ -121,7 +121,7 @@ export const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
             {!isEditing ? (
               <IconButton
                 size="sm"
-                icon={<FaEdit />}
+                icon={<FaPenToSquare />}
                 aria-label="Edit session"
                 onClick={() => setIsEditing(true)}
               />
@@ -130,14 +130,14 @@ export const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
                 <IconButton
                   size="sm"
                   colorScheme="green"
-                  icon={<FaSave />}
+                  icon={<FaFloppyDisk />}
                   aria-label="Save changes"
                   onClick={handleSaveChanges}
                 />
                 <IconButton
                   size="sm"
                   colorScheme="red"
-                  icon={<FaTimes />}
+                  icon={<FaXmark />}
                   aria-label="Cancel editing"
                   onClick={handleCancelEdit}
                 />
@@ -186,7 +186,7 @@ export const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
                     </Box>
                     <VStack align="start" spacing={1}>
                       <Text fontWeight="medium">Tasks Completed</Text>
-                      {session.tasksCompleted.map((task, index) => (
+                      {session.tasksCompleted.map((task: string, index: number) => (
                         <Text key={index} fontSize="sm">• {task}</Text>
                       ))}
                     </VStack>
@@ -201,7 +201,7 @@ export const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
                     </Box>
                     <VStack align="start" spacing={1}>
                       <Text fontWeight="medium">Study Materials</Text>
-                      {session.materials.map((material, index) => (
+                      {session.materials.map((material: string, index: number) => (
                         <Text key={index} fontSize="sm">• {material}</Text>
                       ))}
                     </VStack>
@@ -287,7 +287,7 @@ export const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
               <Box>
                 <Heading size="sm" mb={2}>Tags</Heading>
                 <Flex gap={2} flexWrap="wrap">
-                  {session.tags.map((tag, index) => (
+                  {session.tags.map((tag: string, index: number) => (
                     <Badge key={index} colorScheme="blue" px={2} py={1} borderRadius="md">
                       {tag}
                     </Badge>
