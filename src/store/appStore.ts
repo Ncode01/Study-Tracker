@@ -158,7 +158,7 @@ const calculateStreak = (sessions: LoggedSession[]): StreakData => {
   };
 };
 
-export const useAppStore = create<AppState>((set, get) => ({
+export const useAppStore = create<AppState>((set) => ({
   // Initialize auth state
   auth: {
     isAuthenticated: false,

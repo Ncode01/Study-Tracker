@@ -5,7 +5,6 @@ import {
   Box, 
   Heading, 
   HStack, 
-  VStack,
   Grid, 
   GridItem,
   Button,
@@ -46,7 +45,6 @@ export const DashboardLayout: React.FC = () => {
   
   const currentUser = useAppStore(state => state.auth.currentUser);
   const logout = useAppStore(state => state.logout);
-  const streakData = useAppStore(state => state.streakData);
   const activeTab = useNavStore(state => state.activeTab);
   
   const bgGradient = isDarkMode

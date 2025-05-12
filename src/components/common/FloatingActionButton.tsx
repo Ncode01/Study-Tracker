@@ -3,7 +3,6 @@ import React from 'react';
 import { 
   Box, 
   IconButton, 
-  useColorModeValue, 
   Menu, 
   MenuButton, 
   MenuList, 
@@ -26,7 +25,6 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   onStartTimer 
 }) => {
   const { setActiveTab } = useNavStore();
-  const bgColor = useColorModeValue('brand.500', 'brand.400');
   
   return (
     <MotionBox

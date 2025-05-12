@@ -8,8 +8,7 @@ import {
   Text,
   Flex,
   Tooltip,
-  Divider,
-  useColorModeValue
+  Divider
 } from '@chakra-ui/react';
 import { FaChartBar, FaTachometerAlt, FaHistory, FaUser, FaCog, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useNavStore } from '../../store/navStore';

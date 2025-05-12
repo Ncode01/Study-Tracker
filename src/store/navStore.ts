@@ -2,8 +2,8 @@
 import { create } from 'zustand';
 
 interface NavState {
-  activeTab: 'dashboard' | 'timer' | 'history' | 'profile';
-  setActiveTab: (tab: 'dashboard' | 'timer' | 'history' | 'profile') => void;
+  activeTab: 'dashboard' | 'timer' | 'history' | 'profile' | 'settings';
+  setActiveTab: (tab: 'dashboard' | 'timer' | 'history' | 'profile' | 'settings') => void;
 }
 
 export const useNavStore = create<NavState>((set) => ({
