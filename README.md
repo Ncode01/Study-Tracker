@@ -1,81 +1,54 @@
-# ByteLearn Study Tracker
+# React + TypeScript + Vite
 
-A comprehensive study tracking web application designed specifically for Sri Lankan O/L students to monitor and optimize their study habits.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Overview
+Currently, two official plugins are available:
 
-ByteLearn helps students track their study sessions, set goals, visualize progress, and stay motivated through gamification features. The application supports all Sri Lankan O/L curriculum subjects and provides personalized insights to improve study efficiency.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Tech Stack
+## Expanding the ESLint configuration
 
-- **Frontend**: React with TypeScript
-- **Backend**: Node.js with Express
-- **Database**: MongoDB
-- **State Management**: Redux
-- **UI Framework**: Tailwind CSS
-- **Charts**: Chart.js
-- **Authentication**: JWT
-- **Offline Support**: LocalStorage/IndexedDB
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-## Features
+```js
+export default tseslint.config({
+  extends: [
+    // Remove ...tseslint.configs.recommended and replace with this
+    ...tseslint.configs.recommendedTypeChecked,
+    // Alternatively, use this for stricter rules
+    ...tseslint.configs.strictTypeChecked,
+    // Optionally, add this for stylistic rules
+    ...tseslint.configs.stylisticTypeChecked,
+  ],
+  languageOptions: {
+    // other options...
+    parserOptions: {
+      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+})
+```
 
-- User authentication and profile management
-- Subject management with color-coding
-- Customizable dashboard with drag-and-drop widgets
-- Study timer and session tracking
-- Progress visualization and analytics
-- Gamification (streaks, badges, credit ratings)
-- Social features (friends, leaderboards)
-- Privacy controls
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-## Setup Instructions
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-### Prerequisites
-
-- Node.js (v18.x or higher)
-- npm (v8.x or higher)
-- MongoDB (v6.x or higher)
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/bytelearn-study-tracker.git
-   cd bytelearn-study-tracker
-   ```
-
-2. Install dependencies:
-   ```bash
-   # Install server dependencies
-   cd server
-   npm install
-   
-   # Install client dependencies
-   cd ../client
-   npm install
-   ```
-
-3. Environment setup:
-   - Create a `.env` file in the server directory based on `.env.example`
-   - Configure your MongoDB connection string and JWT secret
-
-4. Start development servers:
-   ```bash
-   # Start backend server
-   cd server
-   npm run dev
-   
-   # In another terminal, start frontend
-   cd client
-   npm start
-   ```
-
-5. Access the application at `http://localhost:3000`
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contact
-
-For questions or feedback, please reach out to [contact@bytelearn.com](mailto:contact@bytelearn.com).
+export default tseslint.config({
+  plugins: {
+    // Add the react-x and react-dom plugins
+    'react-x': reactX,
+    'react-dom': reactDom,
+  },
+  rules: {
+    // other rules...
+    // Enable its recommended typescript rules
+    ...reactX.configs['recommended-typescript'].rules,
+    ...reactDom.configs.recommended.rules,
+  },
+})
+```
