@@ -10,8 +10,7 @@ import {
   GridItem,
   Button,
   Icon,
-  Text,
-  factory
+  Text
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import { FaMoon, FaSun, FaClipboardCheck, FaBook } from 'react-icons/fa';
@@ -22,8 +21,7 @@ import { SubjectForm } from '../subjects/SubjectForm';
 import { StudyTimer } from '../timer/StudyTimer';
 import { PointsDisplay } from '../common/PointsDisplay';
 
-// Updated for Chakra UI v3
-const MotionBox = motion(factory.element(Box));
+const MotionBox = motion(Box as any);
 
 export const DashboardLayout: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(true); // Default to dark mode

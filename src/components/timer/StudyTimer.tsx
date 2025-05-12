@@ -9,8 +9,7 @@ import {
   HStack,
   Heading,
   Badge,
-  Textarea,
-  factory
+  Textarea
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import { FaPlay, FaPause, FaStop, FaSave } from 'react-icons/fa';
@@ -18,8 +17,7 @@ import { FaPlay, FaPause, FaStop, FaSave } from 'react-icons/fa';
 // Import the CustomSelect component using the barrel file
 import { CustomSelect } from '../common';
 
-// Updated for Chakra UI v3
-const MotionBox = motion(factory.element(Box));
+const MotionBox = motion(Box as any);
 
 export const StudyTimer: React.FC = () => {
   const { subjects, tasks, logSession } = useAppStore();

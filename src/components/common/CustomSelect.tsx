@@ -1,6 +1,6 @@
 // src/components/common/CustomSelect.tsx
 import React from 'react';
-import { Box, factory } from '@chakra-ui/react';
+import { Box } from '@chakra-ui/react';
 
 interface CustomSelectProps {
   name?: string;
@@ -12,9 +12,6 @@ interface CustomSelectProps {
   children: React.ReactNode;
 }
 
-// Create a chakra-wrapped select element using factory for v3
-const ChakraSelect = factory.element("select");
-
 export const CustomSelect = ({ 
   name, 
   value, 
@@ -25,7 +22,8 @@ export const CustomSelect = ({
   children
 }: CustomSelectProps) => (
   <Box position="relative" width="100%">
-    <ChakraSelect
+    <Box
+      as="select"
       name={name}
       value={value}
       onChange={onChange}
@@ -39,7 +37,9 @@ export const CustomSelect = ({
       bg="gray.700"
       color={disabled ? "gray.500" : "white"}
       px={3}
-      appearance="none"
+      sx={{
+        appearance: "none"
+      }}
       _focus={{
         borderColor: 'brand.500',
         boxShadow: '0 0 0 1px var(--chakra-colors-brand-500)'
@@ -55,7 +55,7 @@ export const CustomSelect = ({
         </option>
       )}
       {children}
-    </ChakraSelect>
+    </Box>
     <Box
       position="absolute"
       right="10px"
