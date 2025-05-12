@@ -25,3 +25,21 @@ export interface LoggedSession {
   durationMinutes: number;
   notes?: string;
 }
+
+// New types for user authentication
+export interface User {
+  id: string;
+  username: string;
+  displayName: string;
+  email?: string;
+  points: number;
+  subjects: Subject[];
+  tasks: Task[];
+  loggedSessions: LoggedSession[];
+}
+
+export interface AuthState {
+  isAuthenticated: boolean;
+  currentUser: User | null;
+  error: string | null;
+}

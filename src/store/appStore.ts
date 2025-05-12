@@ -1,8 +1,14 @@
 // src/store/appStore.ts
 import { create } from 'zustand';
-import type { Subject, Task, LoggedSession } from '../types';
+import type { Subject, Task, LoggedSession, User, AuthState } from '../types';
 
 interface AppState {
+  // Auth state
+  auth: AuthState;
+  login: (username: string, password: string) => boolean;
+  logout: () => void;
+
+  // App data
   subjects: Subject[];
   tasks: Task[];
   loggedSessions: LoggedSession[];
@@ -17,6 +23,36 @@ interface AppState {
 let subjectIdCounter = 2; // Start from 2 because we have initial data
 let taskIdCounter = 3; // Start from 3 because we have initial data
 let sessionIdCounter = 1;
+
+// Hardcoded user accounts
+const users: User[] = [
+  {
+    id: 'user-1',
+    username: 'student',
+    displayName: 'Student User',
+    email: 'student@example.com',
+    points: 0,
+    subjects: [],
+    tasks: [],
+    loggedSessions: []
+  },
+  {
+    id: 'user-2',
+    username: 'admin',
+    displayName: 'Admin User',
+    email: 'admin@example.com',
+    points: 100,
+    subjects: [],
+    tasks: [],
+    loggedSessions: []
+  }
+];
+
+// In a real app, passwords would be hashed and not stored directly
+const userPasswords: Record<string, string> = {
+  'student': 'password123',
+  'admin': 'admin123'
+};
 
 // Initial demo data
 const initialSubjects: Subject[] = [
@@ -53,6 +89,50 @@ const initialTasks: Task[] = [
 ];
 
 export const useAppStore = create<AppState>((set) => ({
+  // Initialize auth state
+  auth: {
+    isAuthenticated: false,
+    currentUser: null,
+    error: null
+  },
+
+  // Authentication methods
+  login: (username, password) => {
+    // Check if username exists and password matches
+    if (userPasswords[username] === password) {
+      const user = users.find(u => u.username === username);
+      if (user) {
+        set({ 
+          auth: { 
+            isAuthenticated: true, 
+            currentUser: user, 
+            error: null 
+          }
+        });
+        return true;
+      }
+    }
+    
+    // Authentication failed
+    set(state => ({
+      auth: {
+        ...state.auth,
+        error: 'Invalid username or password'
+      }
+    }));
+    return false;
+  },
+
+  logout: () => {
+    set({
+      auth: {
+        isAuthenticated: false,
+        currentUser: null,
+        error: null
+      }
+    });
+  },
+
   subjects: initialSubjects,
   tasks: initialTasks,
   loggedSessions: [],
