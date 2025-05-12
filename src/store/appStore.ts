@@ -1,6 +1,7 @@
 // src/store/appStore.ts
 import { create } from 'zustand';
-import type { Subject, Task, LoggedSession, User, AuthState } from '../types';
+import type { Subject, Task, LoggedSession, User, AuthState, StreakData } from '../types';
+import { format, isYesterday, isToday, subDays } from 'date-fns';
 
 interface AppState {
   // Auth state
@@ -17,7 +18,12 @@ interface AppState {
   addTask: (task: Omit<Task, 'id' | 'completed' | 'createdAt'>) => void;
   toggleTask: (taskId: string) => void;
   logSession: (session: Omit<LoggedSession, 'id'>) => void;
-  // Add other actions: deleteSubject, deleteTask, etc.
+  updateSession: (updatedSession: LoggedSession) => void;
+  deleteSession: (sessionId: string) => void;
+  
+  // Streak data
+  streakData: StreakData;
+  updateStreak: () => void;
 }
 
 let subjectIdCounter = 2; // Start from 2 because we have initial data
@@ -88,7 +94,71 @@ const initialTasks: Task[] = [
   },
 ];
 
-export const useAppStore = create<AppState>((set) => ({
+// Initial streak data
+const initialStreakData: StreakData = {
+  currentStreak: 0,
+  longestStreak: 0,
+  lastActiveDate: null
+};
+
+// Helper function to calculate streak
+const calculateStreak = (sessions: LoggedSession[]): StreakData => {
+  if (sessions.length === 0) {
+    return initialStreakData;
+  }
+  
+  // Group sessions by date (to avoid counting multiple sessions on the same day)
+  const sessionsByDate: Record<string, Date> = {};
+  sessions.forEach(session => {
+    const date = new Date(session.startTime);
+    const dateKey = format(date, 'yyyy-MM-dd');
+    sessionsByDate[dateKey] = date;
+  });
+  
+  // Convert to array of dates, most recent first
+  const dates = Object.values(sessionsByDate).sort((a, b) => b.getTime() - a.getTime());
+  
+  if (dates.length === 0) {
+    return initialStreakData;
+  }
+  
+  const mostRecentDate = dates[0];
+  // Check if streak is active (most recent session is today or yesterday)
+  const isStreakActive = isToday(mostRecentDate) || isYesterday(mostRecentDate);
+  
+  if (!isStreakActive) {
+    return {
+      currentStreak: 0,
+      longestStreak: 0, // This would need persistent storage to maintain
+      lastActiveDate: mostRecentDate
+    };
+  }
+  
+  // Calculate current streak
+  let currentStreak = 1;
+  let previousDate = mostRecentDate;
+  
+  for (let i = 1; i < dates.length; i++) {
+    const expectedPreviousDay = subDays(previousDate, 1);
+    const previousDayFormatted = format(expectedPreviousDay, 'yyyy-MM-dd');
+    const currentDateFormatted = format(dates[i], 'yyyy-MM-dd');
+    
+    if (previousDayFormatted === currentDateFormatted) {
+      currentStreak++;
+      previousDate = dates[i];
+    } else {
+      break; // Streak broken
+    }
+  }
+  
+  return {
+    currentStreak,
+    longestStreak: currentStreak, // In a real app, we would persist and update this
+    lastActiveDate: mostRecentDate
+  };
+};
+
+export const useAppStore = create<AppState>((set, get) => ({
   // Initialize auth state
   auth: {
     isAuthenticated: false,
@@ -137,6 +207,7 @@ export const useAppStore = create<AppState>((set) => ({
   tasks: initialTasks,
   loggedSessions: [],
   points: 0,
+  streakData: initialStreakData,
 
   addSubject: (subjectData) =>
     set((state) => ({
@@ -165,8 +236,57 @@ export const useAppStore = create<AppState>((set) => ({
     }),
 
   logSession: (sessionData) =>
-    set((state) => ({
-      loggedSessions: [...state.loggedSessions, { ...sessionData, id: `sess-${sessionIdCounter++}` }],
-      points: state.points + Math.floor(sessionData.durationMinutes / 10) // 1 point per 10 mins
-    })),
+    set((state) => {
+      const newSession = { 
+        ...sessionData, 
+        id: `sess-${sessionIdCounter++}` 
+      };
+      const newSessions = [...state.loggedSessions, newSession];
+      const earnedPoints = Math.floor(sessionData.durationMinutes / 10); // 1 point per 10 mins
+      
+      // Update streak data
+      const newStreakData = calculateStreak(newSessions);
+      
+      return {
+        loggedSessions: newSessions,
+        points: state.points + earnedPoints,
+        streakData: newStreakData
+      };
+    }),
+    
+  updateSession: (updatedSession) =>
+    set((state) => {
+      const updatedSessions = state.loggedSessions.map(session => 
+        session.id === updatedSession.id ? updatedSession : session
+      );
+      
+      return { loggedSessions: updatedSessions };
+    }),
+    
+  deleteSession: (sessionId) =>
+    set((state) => {
+      const deletedSession = state.loggedSessions.find(session => session.id === sessionId);
+      const updatedSessions = state.loggedSessions.filter(session => session.id !== sessionId);
+      
+      // Recalculate points
+      let pointsToDeduct = 0;
+      if (deletedSession) {
+        pointsToDeduct = Math.floor(deletedSession.durationMinutes / 10);
+      }
+      
+      // Recalculate streak after deletion
+      const newStreakData = calculateStreak(updatedSessions);
+      
+      return { 
+        loggedSessions: updatedSessions,
+        points: Math.max(0, state.points - pointsToDeduct),
+        streakData: newStreakData
+      };
+    }),
+    
+  updateStreak: () =>
+    set((state) => {
+      const newStreakData = calculateStreak(state.loggedSessions);
+      return { streakData: newStreakData };
+    })
 }));

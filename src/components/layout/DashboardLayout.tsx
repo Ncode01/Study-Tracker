@@ -27,6 +27,7 @@ import { TaskForm } from '../tasks/TaskForm';
 import { SubjectList } from '../subjects/SubjectList';
 import { SubjectForm } from '../subjects/SubjectForm';
 import { StudyTimer } from '../timer/StudyTimer';
+import { HistoryView } from '../history/HistoryView';
 import { PointsDisplay } from '../common/PointsDisplay';
 import { FloatingActionButton } from '../common/FloatingActionButton';
 import { BottomNavigation } from '../navigation/BottomNavigation';
@@ -45,6 +46,7 @@ export const DashboardLayout: React.FC = () => {
   
   const currentUser = useAppStore(state => state.auth.currentUser);
   const logout = useAppStore(state => state.logout);
+  const streakData = useAppStore(state => state.streakData);
   const activeTab = useNavStore(state => state.activeTab);
   
   const bgGradient = isDarkMode
@@ -259,13 +261,8 @@ export const DashboardLayout: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              bg={cardBg}
-              p={6}
-              borderRadius="xl"
-              boxShadow="lg"
             >
-              <Heading size="md" mb={4}>Study History</Heading>
-              <Text color="gray.500">History view will be implemented soon.</Text>
+              <HistoryView />
             </MotionBox>
           )}
           
