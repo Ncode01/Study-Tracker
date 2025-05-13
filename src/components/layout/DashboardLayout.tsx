@@ -15,7 +15,8 @@ import {
   MenuItem,
   Flex,
   useColorModeValue,
-  useDisclosure
+  useDisclosure,
+  Badge
 } from '@chakra-ui/react';
 import { FaMoon, FaSun, FaClipboardCheck, FaBook, FaSignOutAlt, FaUser } from 'react-icons/fa';
 import { TaskList } from '../tasks/TaskList';
@@ -36,10 +37,15 @@ import {
   GlassmorphicPanel, 
   ElasticScroll, 
   SpatialTransition, 
-  BreathingAnimation 
+  BreathingAnimation,
+  ThreeDProgressRing
 } from '../ui';
+import { motion } from 'framer-motion';
 import { useAdaptiveTheme } from '../../styles/emotionalDesign';
 import { useContextualCursor } from '../../styles/cursorEffects';
+
+// Define MotionBox component
+const MotionBox = motion(Box);
 
 export const DashboardLayout: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(true); // Default to dark mode
@@ -106,10 +112,24 @@ export const DashboardLayout: React.FC = () => {
   const dashboardAreas = [
     { id: 'subjects', rowSpan: 1, colSpan: 4, priority: 1 },
     { id: 'tasks', rowSpan: 1, colSpan: 8, priority: 2 },
-    { id: 'stats', rowSpan: 1, colSpan: 4, priority: 3 },
-    { id: 'progress', rowSpan: 1, colSpan: 4, priority: 4 },
-    { id: 'tips', rowSpan: 1, colSpan: 4, priority: 5 },
+    { id: 'stats', rowSpan: 1, colSpan: 6, priority: 3 },
+    { id: 'progress', rowSpan: 1, colSpan: 6, priority: 4 },
   ];
+
+  // Stats data for visualization
+  const studyStatsByCat = [
+    { category: 'Math', hours: 8.5, color: '#FF5252' },
+    { category: 'Programming', hours: 12, color: '#42A5F5' },
+    { category: 'Physics', hours: 5.5, color: '#FFB300' },
+    { category: 'Literature', hours: 3, color: '#9CCC65' },
+  ];
+
+  // Progress data for visualization
+  const goalProgress = {
+    total: 5,
+    completed: 3,
+    progress: 0.6
+  };
 
   return (
     <Box
@@ -264,26 +284,180 @@ export const DashboardLayout: React.FC = () => {
                   </ElasticScroll>
                 </BentoItem>
                 
-                {/* Stats Card */}
+                {/* Stats Card with interactive visualization */}
                 <BentoItem mood={mood} glassmorphic={true} hoverEffect="scale">
-                  <Heading size="md" mb={3}>Study Stats</Heading>
-                  <Text fontSize="sm" color="gray.500">Weekly study time: 12h 30m</Text>
-                  <Text fontSize="sm" color="gray.500">Current streak: {studyStreak} days</Text>
-                  <Text fontSize="sm" color="gray.500">Most productive: Monday</Text>
+                  <Heading size="md" mb={4}>Study Stats</Heading>
+                  
+                  <Box position="relative" height="200px">
+                    {/* Interactive 3D visualization of study time by category */}
+                    <ThreeDProgressRing progress={0.75} mood={mood} size={200} />
+                    
+                    <Flex 
+                      position="absolute" 
+                      top="50%" 
+                      left="50%" 
+                      transform="translate(-50%, -50%)" 
+                      direction="column" 
+                      align="center"
+                    >
+                      <Text fontSize="2xl" fontWeight="bold">{studyStreak}</Text>
+                      <Text fontSize="sm" color={palette.accent}>Day Streak</Text>
+                    </Flex>
+                  </Box>
+                  
+                  <Box mt={4}>
+                    {studyStatsByCat.map((stat, index) => (
+                      <Flex key={index} align="center" mb={2}>
+                        <Box 
+                          w="12px" 
+                          h="12px" 
+                          borderRadius="full" 
+                          bg={stat.color} 
+                          mr={2} 
+                          boxShadow={`0 0 8px ${stat.color}80`}
+                        />
+                        <Text fontSize="sm" flex="1">{stat.category}</Text>
+                        <Text fontSize="sm" fontWeight="bold">{stat.hours}h</Text>
+                      </Flex>
+                    ))}
+                  </Box>
                 </BentoItem>
                 
-                {/* Progress Card */}
-                <BentoItem mood={mood} glassmorphic={true}>
-                  <Heading size="md" mb={3}>Goals Progress</Heading>
-                  <Text fontSize="sm" color="gray.500">3 of 5 goals completed this week</Text>
-                </BentoItem>
-                
-                {/* Study Tips Card */}
-                <BentoItem mood={mood} glassmorphic={true}>
-                  <Heading size="md" mb={3}>Quick Tips</Heading>
-                  <Text fontSize="sm" color="gray.500">
-                    Try the Pomodoro technique: 25 minutes of focused study followed by a 5-minute break.
-                  </Text>
+                {/* Goal Progress with liquid animation */}
+                <BentoItem mood={mood} glassmorphic={true} hoverEffect="glow">
+                  <Heading size="md" mb={4}>Goals Progress</Heading>
+                  
+                  {/* Liquid progress bar */}
+                  <Box 
+                    position="relative" 
+                    height="30px" 
+                    bg="rgba(0,0,0,0.2)" 
+                    borderRadius="full" 
+                    overflow="hidden"
+                    mb={4}
+                    sx={{
+                      "@keyframes wave": {
+                        "0%": { backgroundPositionX: "0%" },
+                        "100%": { backgroundPositionX: "100%" }
+                      }
+                    }}
+                  >
+                    <MotionBox
+                      position="absolute"
+                      top="0"
+                      left="0"
+                      height="100%"
+                      width={`${goalProgress.progress * 100}%`}
+                      borderRadius="full"
+                      bgGradient={`linear(to-r, ${palette.primary}, ${palette.accent})`}
+                      initial={{ width: 0 }}
+                      animate={{ 
+                        width: `${goalProgress.progress * 100}%`,
+                        transition: { duration: 1.5, ease: "easeOut" }
+                      }}
+                      // Liquid wave effect
+                      _after={{
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='0.2' d='M0,192L60,208C120,224,240,256,360,250.7C480,245,600,203,720,197.3C840,192,960,224,1080,224C1200,224,1320,192,1380,176L1440,160L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z'%3E%3C/path%3E%3C/svg%3E") repeat-x`,
+                        backgroundSize: '100% 100%',
+                        animation: 'wave 8s linear infinite',
+                      }}
+                    />
+                    
+                    {/* Percentage text overlay */}
+                    <Flex 
+                      position="absolute" 
+                      top="0" 
+                      left="0" 
+                      right="0" 
+                      bottom="0" 
+                      align="center" 
+                      justify="center"
+                    >
+                      <Text 
+                        fontSize="sm" 
+                        fontWeight="bold"
+                        color="white"
+                        textShadow="0 0 4px rgba(0,0,0,0.5)"
+                      >
+                        {Math.round(goalProgress.progress * 100)}%
+                      </Text>
+                    </Flex>
+                  </Box>
+                  
+                  {/* Goal stats and details */}
+                  <HStack justify="space-between" mb={2}>
+                    <Text fontSize="sm">Completed Goals</Text>
+                    <Text fontSize="sm" fontWeight="bold">{goalProgress.completed} of {goalProgress.total}</Text>
+                  </HStack>
+                  
+                  {/* Goal list */}
+                  <Box mt={4} pl={2}>
+                    <Flex align="center" mb={2}>
+                      <Box 
+                        w="10px" 
+                        h="10px" 
+                        borderRadius="full" 
+                        bg="green.400" 
+                        mr={2} 
+                      />
+                      <Text fontSize="sm" flex="1">Complete Math Assignment</Text>
+                      <Badge colorScheme="green">Done</Badge>
+                    </Flex>
+                    
+                    <Flex align="center" mb={2}>
+                      <Box 
+                        w="10px" 
+                        h="10px" 
+                        borderRadius="full" 
+                        bg="green.400" 
+                        mr={2} 
+                      />
+                      <Text fontSize="sm" flex="1">Study for History Test</Text>
+                      <Badge colorScheme="green">Done</Badge>
+                    </Flex>
+                    
+                    <Flex align="center" mb={2}>
+                      <Box 
+                        w="10px" 
+                        h="10px" 
+                        borderRadius="full" 
+                        bg="green.400" 
+                        mr={2} 
+                      />
+                      <Text fontSize="sm" flex="1">Read Chapter 5</Text>
+                      <Badge colorScheme="green">Done</Badge>
+                    </Flex>
+                    
+                    <Flex align="center" mb={2}>
+                      <Box 
+                        w="10px" 
+                        h="10px" 
+                        borderRadius="full" 
+                        bg="gray.500" 
+                        mr={2} 
+                      />
+                      <Text fontSize="sm" flex="1">Write Research Paper</Text>
+                      <Badge colorScheme="gray">Pending</Badge>
+                    </Flex>
+                    
+                    <Flex align="center">
+                      <Box 
+                        w="10px" 
+                        h="10px" 
+                        borderRadius="full" 
+                        bg="gray.500" 
+                        mr={2} 
+                      />
+                      <Text fontSize="sm" flex="1">Review Project Code</Text>
+                      <Badge colorScheme="gray">Pending</Badge>
+                    </Flex>
+                  </Box>
                 </BentoItem>
               </BentoGrid>
             </SpatialTransition>
