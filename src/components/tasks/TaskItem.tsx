@@ -7,8 +7,7 @@ import {
   Flex, 
   Badge, 
   IconButton, 
-  Tooltip,
-  useColorModeValue
+  Tooltip
 } from '@chakra-ui/react';
 import { FaTrash, FaRegClock, FaTag } from 'react-icons/fa';
 import { useAppStore } from '../../store/appStore';
