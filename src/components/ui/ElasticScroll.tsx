@@ -26,7 +26,7 @@ interface ElasticScrollProps extends Omit<BoxProps, 'onScroll'> {
 const ElasticScroll: React.FC<ElasticScrollProps> = ({
   children,
   maxHeight,
-  elasticity = 0.5,
+  elasticity = 0.3, // Reduced default elasticity for better usability
   showScrollIndicator = true,
   mood = 'focus',
   scrollbarWidth = '6px',
@@ -45,9 +45,9 @@ const ElasticScroll: React.FC<ElasticScrollProps> = ({
   
   // Spring physics for elastic behavior
   const springConfig = { stiffness: 400, damping: 90, mass: 1 };
-  const y = useSpring(useTransform(scrollY, [0, -contentHeight], [0, -contentHeight]), springConfig);
+  const y = useSpring(0, springConfig);
   
-  // Check if scrolling is possible
+  // Check if scrolling is possible and measure content
   useEffect(() => {
     if (scrollRef.current) {
       const updateHeights = () => {
@@ -57,14 +57,37 @@ const ElasticScroll: React.FC<ElasticScrollProps> = ({
           setContentHeight(content);
           setContainerHeight(container);
           setIsScrollable(content > container);
+          
+          // Debug logging
+          console.log("ElasticScroll dimensions:", {
+            content, 
+            container, 
+            isScrollable: content > container
+          });
         }
       };
       
+      // Initial measurement
       updateHeights();
       
       // Re-measure when window size changes
       window.addEventListener('resize', updateHeights);
-      return () => window.removeEventListener('resize', updateHeights);
+      
+      // Re-measure when content likely changes
+      const observer = new MutationObserver(updateHeights);
+      if (scrollRef.current) {
+        observer.observe(scrollRef.current, { 
+          childList: true, 
+          subtree: true,
+          attributes: true,
+          characterData: true
+        });
+      }
+      
+      return () => {
+        window.removeEventListener('resize', updateHeights);
+        observer.disconnect();
+      };
     }
   }, [scrollRef, children]);
   
@@ -75,16 +98,16 @@ const ElasticScroll: React.FC<ElasticScrollProps> = ({
       
       // Update motion values
       scrollY.set(-scrollTop);
-      scrollYProgress.set(scrollTop / (scrollHeight - clientHeight));
+      scrollYProgress.set(scrollTop / (scrollHeight - clientHeight || 1)); // Avoid division by zero
       
       // Apply elastic effect at boundaries
       if (elasticity > 0) {
         if (scrollTop <= 0) {
           // Over-scroll at top
-          y.set(elasticity * 100);
+          y.set(elasticity * 50); // Reduced elasticity amount
         } else if (scrollTop + clientHeight >= scrollHeight) {
           // Over-scroll at bottom
-          y.set(-elasticity * 100);
+          y.set(-elasticity * 50); // Reduced elasticity amount
         } else {
           y.set(0);
         }
@@ -92,12 +115,12 @@ const ElasticScroll: React.FC<ElasticScrollProps> = ({
     }
   };
   
-  // Create scrollbar styles as a direct style object, not through Chakra's sx prop
-  const scrollbarStyleTag = showScrollIndicator ? (
+  // Create scrollbar styles 
+  const scrollbarStyleTag = (
     <style>
       {`
         .scrollable-content::-webkit-scrollbar {
-          width: ${scrollbarWidth};
+          width: ${showScrollIndicator ? scrollbarWidth : '0px'};
         }
         .scrollable-content::-webkit-scrollbar-track {
           background: ${palette.primary}10;
@@ -113,15 +136,6 @@ const ElasticScroll: React.FC<ElasticScrollProps> = ({
         }
       `}
     </style>
-  ) : (
-    <style>
-      {`
-        .scrollable-content::-webkit-scrollbar {
-          width: 0px;
-          background: transparent;
-        }
-      `}
-    </style>
   );
   
   // Scroll indicator that shows scrollbar position
@@ -130,10 +144,14 @@ const ElasticScroll: React.FC<ElasticScrollProps> = ({
     const indicatorTop = useTransform(
       scrollYProgress,
       [0, 1],
-      [0, containerHeight - (containerHeight * (containerHeight / contentHeight))]
+      [0, containerHeight - (containerHeight * (containerHeight / (contentHeight || 1)))]
     );
     
-    const indicatorHeight = containerHeight * (containerHeight / contentHeight);
+    // Calculate indicator height with protection against invalid values
+    const indicatorHeight = Math.max(
+      20, // Minimum size
+      containerHeight * (containerHeight / (contentHeight || containerHeight * 2))
+    );
     
     return (
       <MotionBox
@@ -168,14 +186,17 @@ const ElasticScroll: React.FC<ElasticScrollProps> = ({
         position="relative"
         className="scrollable-content"
         onScroll={handleScroll}
-        // Apply fluid, elastic physics to scrolling
+        // Apply fluid, elastic physics to scrolling with protection against extreme values
         style={{
           y: useTransform(y, value => 
-            elasticity > 0 ? Math.sin(value * 0.1) * elasticity * 20 : 0
+            elasticity > 0 ? Math.min(Math.max(Math.sin(value * 0.1) * elasticity * 20, -30), 30) : 0
           )
         }}
+        minHeight="50px" // Ensure minimum height to prevent collapse
       >
-        {children}
+        <Box py={1}> {/* Extra padding to ensure content is visible */}
+          {children}
+        </Box>
       </MotionBox>
       
       {showScrollIndicator && isScrollable && <ScrollIndicator />}

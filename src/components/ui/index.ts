@@ -5,3 +5,6 @@ export { default as BreathingAnimation } from './BreathingAnimation';
 export { default as GlassmorphicPanel } from './GlassmorphicPanel';
 export { default as BentoGrid, BentoItem } from './BentoGrid';
 export { default as ElasticScroll } from './ElasticScroll';
+export { default as SmartHoverCard } from './SmartHoverCard';
+export { default as RippleButton } from './RippleButton';
+export { default as AnimatedCheckmark } from './AnimatedCheckmark';
