@@ -1,6 +1,6 @@
 // src/components/ui/ClayButton.tsx
 import React from 'react';
-import { Button } from '@chakra-ui/react';
+import { Button, Box } from '@chakra-ui/react';
 import type { ButtonProps } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
@@ -50,21 +50,44 @@ const ClayButton: React.FC<ClayButtonProps> = ({
     }
   };
 
-  // Animation variants
-  const buttonVariants: Record<string, { scale: number; boxShadow: string }> = {
+  // Enhanced animation variants with claymorphism effects
+  const buttonVariants = {
     initial: { 
       scale: 1, 
-      boxShadow: shadowIntensity[intensity].base
+      boxShadow: shadowIntensity[intensity].base,
+      borderRadius: "16px"
     },
     hover: { 
       scale: hoverScale, 
-      boxShadow: shadowIntensity[intensity].hover
+      boxShadow: shadowIntensity[intensity].hover,
+      borderRadius: "14px", // Subtle shape change on hover
     },
     tap: { 
       scale: pressScale, 
-      boxShadow: shadowIntensity[intensity].active
+      boxShadow: shadowIntensity[intensity].active,
+      borderRadius: "18px", // More rounded when pressed - "squish" effect
+      // Apply a slight rotation for a more organic feel
+      rotate: Math.random() > 0.5 ? 0.5 : -0.5
     }
   };
+
+  // Create spring-based transition for more natural movement
+  const springTransition: Transition = {
+    type: "spring", 
+    stiffness: 500, 
+    damping: 30,
+    mass: 1
+  };
+
+  // Detect reduced motion preference
+  const prefersReducedMotion = typeof window !== 'undefined' 
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
+    : false;
+
+  // Simplified animation for reduced motion preference
+  const accessibleTransition: Transition = prefersReducedMotion 
+    ? { duration: 0.1 } 
+    : springTransition;
 
   return (
     <MotionButton
@@ -72,18 +95,45 @@ const ClayButton: React.FC<ClayButtonProps> = ({
       whileHover="hover"
       whileTap="tap"
       variants={buttonVariants}
-      transition={{ duration: 0.2 } as Transition}
+      transition={accessibleTransition}
       borderRadius="16px"
       fontSize="md"
       py={4}
       px={6}
       bg={props.bg || `${colorScheme}.500`}
       color={props.color || "white"}
-      _hover={{ bg: props.bg || `${colorScheme}.600` }}  // Ensure Chakra's hover also works
+      _hover={{ bg: props.bg || `${colorScheme}.600` }}
       position="relative"
       overflow="hidden"
+      onHoverStart={() => {
+        // Add subtle haptic feedback on devices that support it
+        if (navigator.vibrate && !prefersReducedMotion) {
+          navigator.vibrate(5);
+        }
+      }}
+      onTap={() => {
+        // Add more pronounced haptic feedback on click
+        if (navigator.vibrate && !prefersReducedMotion) {
+          navigator.vibrate([15, 10, 15]);
+        }
+      }}
       {...props}
     >
+      {/* Create glass morphism effect with pseudo-element */}
+      <Box 
+        as="span" 
+        position="absolute" 
+        top="0" 
+        left="0" 
+        right="0" 
+        bottom="0" 
+        borderRadius="inherit" 
+        pointerEvents="none"
+        bg="linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%)"
+        opacity="0.7"
+        transition="opacity 0.2s ease"
+        _groupHover={{ opacity: "0.9" }}
+      />
       {children}
     </MotionButton>
   );
