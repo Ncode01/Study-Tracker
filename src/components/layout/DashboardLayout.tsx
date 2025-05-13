@@ -1,12 +1,10 @@
 // src/components/layout/DashboardLayout.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Container, 
   Box, 
   Heading, 
   HStack, 
-  Grid, 
-  GridItem,
   Button,
   Icon,
   Text,
@@ -19,7 +17,6 @@ import {
   useColorModeValue,
   useDisclosure
 } from '@chakra-ui/react';
-import { motion } from 'framer-motion';
 import { FaMoon, FaSun, FaClipboardCheck, FaBook, FaSignOutAlt, FaUser } from 'react-icons/fa';
 import { TaskList } from '../tasks/TaskList';
 import { TaskForm } from '../tasks/TaskForm';
@@ -33,13 +30,22 @@ import { BottomNavigation } from '../navigation/BottomNavigation';
 import { Sidebar } from '../navigation/Sidebar';
 import { useAppStore } from '../../store/appStore';
 import { useNavStore } from '../../store/navStore';
-
-const MotionBox = motion(Box as any);
+import { 
+  BentoGrid, 
+  BentoItem, 
+  GlassmorphicPanel, 
+  ElasticScroll, 
+  SpatialTransition, 
+  BreathingAnimation 
+} from '../ui';
+import { useAdaptiveTheme } from '../../styles/emotionalDesign';
+import { useContextualCursor } from '../../styles/cursorEffects';
 
 export const DashboardLayout: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(true); // Default to dark mode
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { isOpen: isTaskFormOpen, onOpen: onTaskFormOpen, onClose: onTaskFormClose } = useDisclosure();
   const timerRef = useRef<HTMLDivElement>(null);
   
@@ -47,10 +53,32 @@ export const DashboardLayout: React.FC = () => {
   const logout = useAppStore(state => state.logout);
   const activeTab = useNavStore(state => state.activeTab);
   
+  // For demonstration purposes, using default values instead of accessing non-existent properties
+  const studyDuration = 25; // Mock study duration in minutes
+  const studyStreak = 3;    // Mock study streak in days
+  
+  // Apply dynamic mood-based theme
+  const { mood, palette } = useAdaptiveTheme(
+    studyDuration, 
+    studyStreak,
+    false // recentBreak
+  );
+  
+  // Enhance UI with contextual cursor effects
+  useContextualCursor(mood);
+  
   const bgGradient = isDarkMode
     ? 'linear(to-br, gray.900, blue.900)'
     : 'linear(to-br, gray.50, blue.50)';
   const cardBg = useColorModeValue('white', 'gray.800');
+
+  // Simulate loading for breathing animation demo
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSubjectSelect = (subjectId: string | null) => {
     setSelectedSubjectId(subjectId);
@@ -73,6 +101,15 @@ export const DashboardLayout: React.FC = () => {
       timerRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  // Define bento areas for dashboard grid layout
+  const dashboardAreas = [
+    { id: 'subjects', rowSpan: 1, colSpan: 4, priority: 1 },
+    { id: 'tasks', rowSpan: 1, colSpan: 8, priority: 2 },
+    { id: 'stats', rowSpan: 1, colSpan: 4, priority: 3 },
+    { id: 'progress', rowSpan: 1, colSpan: 4, priority: 4 },
+    { id: 'tips', rowSpan: 1, colSpan: 4, priority: 5 },
+  ];
 
   return (
     <Box
@@ -100,7 +137,7 @@ export const DashboardLayout: React.FC = () => {
           <Heading
             as="h1"
             size="lg"
-            bgGradient="linear(to-r, brand.400, accent.500)"
+            bgGradient={`linear(to-r, ${palette.primary}, ${palette.accent})`}
             bgClip="text"
           >
             ✨ StudyQuest
@@ -147,6 +184,8 @@ export const DashboardLayout: React.FC = () => {
           </Heading>
           
           <HStack>
+            {isLoading && <BreathingAnimation mood={mood} size="30px" mr={2} />}
+            <PointsDisplay />
             <Button onClick={toggleColorMode} variant="ghost" size="md">
               <Icon as={isDarkMode ? FaSun : FaMoon} />
             </Button>
@@ -180,45 +219,31 @@ export const DashboardLayout: React.FC = () => {
         {/* Main Content based on active tab */}
         <Container maxW="container.xl" px={{ base: 0, md: 4 }}>
           {activeTab === 'dashboard' && (
-            <Grid 
-              templateColumns={{ base: "1fr", lg: "300px 1fr" }}
-              gap={6}
-            >
-              {/* Subjects Column */}
-              <GridItem>
-                <MotionBox
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  bg={cardBg}
-                  p={6}
-                  borderRadius="xl"
-                  boxShadow="lg"
-                  h="100%"
-                >
+            <SpatialTransition isActive={activeTab === 'dashboard'} mood={mood}>
+              {/* Modern Bento Grid Layout for Dashboard */}
+              <BentoGrid 
+                areas={dashboardAreas} 
+                gap={6} 
+                mood={mood}
+                staggerAnimation={true}
+              >
+                {/* Subjects Item */}
+                <BentoItem mood={mood} glassmorphic={true} hoverEffect="glow">
                   <HStack mb={4}>
-                    <Icon as={FaBook} color="brand.500" />
+                    <Icon as={FaBook} color={palette.accent} />
                     <Heading size="md">My Subjects</Heading>
                   </HStack>
                   <SubjectForm />
                   <Box my={4} height="1px" bg="gray.600" />
-                  <SubjectList onSelectSubject={handleSubjectSelect} />
-                </MotionBox>
-              </GridItem>
-              
-              {/* Tasks Column */}
-              <GridItem>
-                <MotionBox
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  bg={cardBg}
-                  p={6}
-                  borderRadius="xl"
-                  boxShadow="lg"
-                >
+                  <ElasticScroll maxHeight="300px" mood={mood}>
+                    <SubjectList onSelectSubject={handleSubjectSelect} />
+                  </ElasticScroll>
+                </BentoItem>
+                
+                {/* Tasks Item */}
+                <BentoItem mood={mood} glassmorphic={true} hoverEffect="lift">
                   <HStack mb={4}>
-                    <Icon as={FaClipboardCheck} color="brand.500" />
+                    <Icon as={FaClipboardCheck} color={palette.accent} />
                     <Heading size="md">
                       {selectedSubjectId ? 'Subject Tasks' : 'All Tasks'}
                     </Heading>
@@ -234,49 +259,59 @@ export const DashboardLayout: React.FC = () => {
                     )}
                   </HStack>
                   <TaskForm isOpen={isTaskFormOpen} onClose={onTaskFormClose} />
-                  <TaskList subjectId={selectedSubjectId || undefined} />
-                </MotionBox>
-              </GridItem>
-            </Grid>
+                  <ElasticScroll maxHeight="400px" mood={mood}>
+                    <TaskList subjectId={selectedSubjectId || undefined} />
+                  </ElasticScroll>
+                </BentoItem>
+                
+                {/* Stats Card */}
+                <BentoItem mood={mood} glassmorphic={true} hoverEffect="scale">
+                  <Heading size="md" mb={3}>Study Stats</Heading>
+                  <Text fontSize="sm" color="gray.500">Weekly study time: 12h 30m</Text>
+                  <Text fontSize="sm" color="gray.500">Current streak: {studyStreak} days</Text>
+                  <Text fontSize="sm" color="gray.500">Most productive: Monday</Text>
+                </BentoItem>
+                
+                {/* Progress Card */}
+                <BentoItem mood={mood} glassmorphic={true}>
+                  <Heading size="md" mb={3}>Goals Progress</Heading>
+                  <Text fontSize="sm" color="gray.500">3 of 5 goals completed this week</Text>
+                </BentoItem>
+                
+                {/* Study Tips Card */}
+                <BentoItem mood={mood} glassmorphic={true}>
+                  <Heading size="md" mb={3}>Quick Tips</Heading>
+                  <Text fontSize="sm" color="gray.500">
+                    Try the Pomodoro technique: 25 minutes of focused study followed by a 5-minute break.
+                  </Text>
+                </BentoItem>
+              </BentoGrid>
+            </SpatialTransition>
           )}
           
           {activeTab === 'timer' && (
-            <MotionBox
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              bg={cardBg}
-              borderRadius="xl"
-              boxShadow="lg"
-              ref={timerRef}
-            >
-              <StudyTimer />
-            </MotionBox>
+            <SpatialTransition isActive={activeTab === 'timer'} mood={mood}>
+              <Box ref={timerRef}>
+                <GlassmorphicPanel mood={mood}>
+                  <StudyTimer />
+                </GlassmorphicPanel>
+              </Box>
+            </SpatialTransition>
           )}
           
           {activeTab === 'history' && (
-            <MotionBox
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
+            <SpatialTransition isActive={activeTab === 'history'} mood={mood}>
               <HistoryView />
-            </MotionBox>
+            </SpatialTransition>
           )}
           
           {activeTab === 'profile' && (
-            <MotionBox
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              bg={cardBg}
-              p={6}
-              borderRadius="xl"
-              boxShadow="lg"
-            >
-              <Heading size="md" mb={4}>User Profile</Heading>
-              <Text color="gray.500">Profile view will be implemented soon.</Text>
-            </MotionBox>
+            <SpatialTransition isActive={activeTab === 'profile'} mood={mood}>
+              <GlassmorphicPanel mood={mood}>
+                <Heading size="md" mb={4}>User Profile</Heading>
+                <Text color="gray.500">Profile view will be implemented soon.</Text>
+              </GlassmorphicPanel>
+            </SpatialTransition>
           )}
         </Container>
       </Box>

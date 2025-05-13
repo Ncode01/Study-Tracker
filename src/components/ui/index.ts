@@ -1,4 +1,7 @@
-// src/components/ui/index.ts
 export { default as ThreeDProgressRing } from './ThreeDProgressRing';
 export { default as ClayButton } from './ClayButton';
 export { default as SpatialTransition } from './SpatialTransition';
+export { default as BreathingAnimation } from './BreathingAnimation';
+export { default as GlassmorphicPanel } from './GlassmorphicPanel';
+export { default as BentoGrid, BentoItem } from './BentoGrid';
+export { default as ElasticScroll } from './ElasticScroll';
