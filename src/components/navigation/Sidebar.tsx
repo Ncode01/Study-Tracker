@@ -10,7 +10,16 @@ import {
   Tooltip,
   Divider
 } from '@chakra-ui/react';
-import { FaChartBar, FaTachometerAlt, FaHistory, FaUser, FaCog, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { 
+  FaChartBar, 
+  FaTachometerAlt, 
+  FaHistory, 
+  FaUser, 
+  FaCog, 
+  FaChevronLeft, 
+  FaChevronRight,
+  FaCalendarAlt 
+} from 'react-icons/fa';
 import { useNavStore } from '../../store/navStore';
 
 interface SidebarProps {
@@ -111,6 +120,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
           isActive={activeTab === 'timer'}
           isCollapsed={isCollapsed}
           onClick={() => setActiveTab('timer')}
+        />
+        
+        <NavItem 
+          icon={FaCalendarAlt} 
+          label="Calendar"
+          isActive={activeTab === 'calendar'}
+          isCollapsed={isCollapsed}
+          onClick={() => setActiveTab('calendar')}
         />
         
         <NavItem 

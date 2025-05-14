@@ -1,12 +1,21 @@
 // src/store/navStore.ts
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { NavRoute } from '../types';
 
 interface NavState {
-  activeTab: 'dashboard' | 'timer' | 'history' | 'profile' | 'settings';
-  setActiveTab: (tab: 'dashboard' | 'timer' | 'history' | 'profile' | 'settings') => void;
+  activeTab: NavRoute;
+  setActiveTab: (tab: NavRoute) => void;
 }
 
-export const useNavStore = create<NavState>((set) => ({
-  activeTab: 'dashboard',
-  setActiveTab: (tab) => set({ activeTab: tab }),
-}));
+export const useNavStore = create<NavState>()(
+  persist(
+    (set) => ({
+      activeTab: 'dashboard' as NavRoute,
+      setActiveTab: (tab: NavRoute) => set({ activeTab: tab }),
+    }),
+    {
+      name: 'nav-storage',
+    }
+  )
+);

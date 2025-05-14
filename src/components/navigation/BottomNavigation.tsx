@@ -9,7 +9,7 @@ import {
   useColorModeValue
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
-import { FaHome, FaClock, FaHistory, FaUser } from 'react-icons/fa';
+import { FaHome, FaClock, FaHistory, FaUser, FaCalendarAlt } from 'react-icons/fa';
 import { useNavStore } from '../../store/navStore';
 
 interface NavItemProps {
@@ -79,6 +79,12 @@ export const BottomNavigation: React.FC = () => {
           label="Timer"
           isActive={activeTab === 'timer'}
           onClick={() => setActiveTab('timer')}
+        />
+        <NavItem
+          icon={FaCalendarAlt}
+          label="Calendar"
+          isActive={activeTab === 'calendar'}
+          onClick={() => setActiveTab('calendar')}
         />
         <NavItem
           icon={FaHistory}

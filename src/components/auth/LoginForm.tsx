@@ -1,5 +1,5 @@
 // src/components/auth/LoginForm.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -21,9 +21,12 @@ import {
   Tab,
   TabPanels,
   TabPanel,
+  Badge,
+  Alert,
+  AlertIcon,
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
-import { FaEye, FaEyeSlash, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaSignInAlt, FaUserPlus, FaCloud, FaCloudDownloadAlt } from 'react-icons/fa';
 import { useAppStore } from '../../store/appStore';
 
 const MotionBox = motion(Box);
@@ -49,13 +52,40 @@ export const LoginForm: React.FC = () => {
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [displayNameError, setDisplayNameError] = useState('');
   
-  const [isFirebaseConfigured] = useState(true);
+  // Firebase connectivity check
+  const [isFirebaseConfigured, setIsFirebaseConfigured] = useState(true);
+  const [isCheckingFirebase, setIsCheckingFirebase] = useState(true);
   
   const login = useAppStore(state => state.login);
   const signUp = useAppStore(state => state.signUp);
   const authError = useAppStore(state => state.auth.error);
   const isOnline = useAppStore(state => state.isOnline);
   const toast = useToast();
+
+  // Check Firebase configuration on mount
+  useEffect(() => {
+    const checkFirebaseConnection = async () => {
+      setIsCheckingFirebase(true);
+      try {
+        // Simple ping to Firebase to verify connectivity
+        await fetch('https://firestore.googleapis.com/v1/projects/study-tracker-abdb2/databases/(default)', {
+          method: 'GET',
+          mode: 'no-cors', // This will prevent CORS errors but we won't get a valid response
+        });
+        
+        // Since we used no-cors, we can't read the response
+        // But if we get here without an error, it's likely configured properly
+        setIsFirebaseConfigured(true);
+      } catch (error) {
+        console.error('Firebase connectivity check failed:', error);
+        setIsFirebaseConfigured(false);
+      } finally {
+        setIsCheckingFirebase(false);
+      }
+    };
+
+    checkFirebaseConnection();
+  }, [isOnline]);
 
   // Validate login form
   const validateLoginForm = () => {
@@ -184,6 +214,12 @@ export const LoginForm: React.FC = () => {
           duration: 3000,
           isClosable: true,
         });
+        
+        // Clear form after successful signup
+        setSignupEmail('');
+        setSignupPassword('');
+        setConfirmPassword('');
+        setDisplayName('');
       } else {
         toast({
           title: 'Signup failed',
@@ -193,11 +229,32 @@ export const LoginForm: React.FC = () => {
           isClosable: true,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup error:', error);
+      let errorMessage = 'An unexpected error occurred';
+      
+      // Extract more specific error messages
+      if (error.message) {
+        if (error.message.includes('auth/email-already-in-use')) {
+          errorMessage = 'This email is already in use. Please try another email or login instead.';
+        } else if (error.message.includes('auth/invalid-email')) {
+          errorMessage = 'Please enter a valid email address.';
+        } else if (error.message.includes('auth/weak-password')) {
+          errorMessage = 'Password is too weak. Please use a stronger password.';
+        } else if (error.message.includes('auth/network-request-failed')) {
+          errorMessage = 'Network error. Please check your internet connection.';
+        } else if (error.message.includes('auth/configuration-not-found')) {
+          errorMessage = 'Firebase configuration issue. Please contact support.';
+          console.error('Firebase configuration issue - check your firebase config.ts file');
+        } else {
+          // Use the specific error message if available
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: 'Signup failed',
-        description: 'An unexpected error occurred',
+        description: errorMessage,
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -226,17 +283,52 @@ export const LoginForm: React.FC = () => {
     }
   };
 
-  // Show an offline indicator if needed
+  // Show connectivity status indicators
   const connectivityStatus = () => {
     if (!isOnline) {
       return (
-        <Box mt={3} p={2} bg="orange.700" borderRadius="md" textAlign="center">
-          <Text fontSize="sm">
-            You are currently offline. Limited functionality is available.
-          </Text>
+        <Alert status="warning" variant="solid" borderRadius="md" mb={4}>
+          <AlertIcon />
+          You are currently offline. Limited functionality is available.
+        </Alert>
+      );
+    }
+    
+    if (isCheckingFirebase) {
+      return (
+        <Box mt={3} p={2} bg="blue.700" borderRadius="md" textAlign="center">
+          <Flex align="center" justify="center">
+            <FaCloudDownloadAlt style={{ marginRight: '8px' }} />
+            <Text fontSize="sm">
+              Checking cloud connection...
+            </Text>
+          </Flex>
         </Box>
       );
     }
+    
+    if (!isFirebaseConfigured && isOnline) {
+      return (
+        <Alert status="warning" variant="solid" borderRadius="md" mb={4}>
+          <AlertIcon />
+          Cloud services unavailable. Using local storage only.
+        </Alert>
+      );
+    }
+    
+    if (isFirebaseConfigured && isOnline) {
+      return (
+        <Box mt={2} mb={2}>
+          <Flex justify="center">
+            <Badge colorScheme="green" p={1} borderRadius="md" display="flex" alignItems="center">
+              <FaCloud style={{ marginRight: '4px' }} />
+              Connected to cloud
+            </Badge>
+          </Flex>
+        </Box>
+      );
+    }
+    
     return null;
   };
 
@@ -424,6 +516,12 @@ export const LoginForm: React.FC = () => {
                     {!isOnline && (
                       <Text fontSize="sm" color="orange.300" textAlign="center">
                         Sign up requires an internet connection
+                      </Text>
+                    )}
+                    
+                    {!isFirebaseConfigured && isOnline && (
+                      <Text fontSize="sm" color="orange.300" textAlign="center">
+                        Cloud services unavailable. Please try again later.
                       </Text>
                     )}
                   </VStack>

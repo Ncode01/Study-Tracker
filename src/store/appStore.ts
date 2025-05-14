@@ -1,4 +1,3 @@
-// src/store/appStore.ts
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Subject, Task, LoggedSession, User, AuthState, StreakData } from '../types';
@@ -6,6 +5,26 @@ import { format, isYesterday, isToday, subDays } from 'date-fns';
 import * as FirestoreService from '../firebase/firestore';
 import * as AuthService from '../firebase/auth';
 import type { User as FirebaseUser } from 'firebase/auth';
+
+// Add counters at the top-level scope:
+let subjectIdCounter = 0;
+let taskIdCounter = 0;
+let sessionIdCounter = 0;
+
+// Add UserStats interface for tracking user statistics
+interface UserStats {
+  studyPoints: number;
+  totalStudyHours?: number;
+  completedTasks?: number;
+}
+
+// Define FirestoreUserDoc type for fetched user data
+type FirestoreUserDoc = {
+  createdAt?: any;
+  updatedAt?: any;
+  streakData?: any;
+  points?: number;
+};
 
 interface AppState {
   // Auth state
@@ -29,21 +48,21 @@ interface AppState {
   addSubject: (subject: Omit<Subject, 'id'>) => Promise<void>;
   addTask: (task: Omit<Task, 'id' | 'completed' | 'createdAt'>) => Promise<void>;
   toggleTask: (taskId: string) => Promise<void>;
-  logSession: (session: Omit<LoggedSession, 'id'>) => Promise<void>;
+  logSession: (session: Omit<LoggedSession, 'id'>) => Promise<LoggedSession>; // Update return type
   updateSession: (updatedSession: LoggedSession) => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
+  deleteTask: (taskId: string) => Promise<void>;
   
   // Streak data
   streakData: StreakData;
   updateStreak: () => Promise<void>;
   
+  // User stats data
+  userStats?: UserStats;
+  
   // Data fetching
   fetchUserData: (userId: string) => Promise<void>;
 }
-
-let subjectIdCounter = 2; // Start from 2 because we have initial data
-let taskIdCounter = 3; // Start from 3 because we have initial data
-let sessionIdCounter = 1;
 
 // Hardcoded user accounts for demo use when Firebase is not configured
 const demoUsers: User[] = [
@@ -250,7 +269,7 @@ const initializeCounters = (data: any) => {
 
 // Check if we're currently online
 const checkOnlineStatus = () => {
-  return navigator.onLine;
+  return typeof navigator !== 'undefined' ? navigator.onLine : true;
 };
 
 // Set up network status listener
@@ -268,8 +287,7 @@ if (typeof window !== 'undefined') {
 
 // Listen for Firebase auth state changes
 if (typeof window !== 'undefined') {
-  // We're declaring this variable but not using it directly - we keep the subscription active
-  // for the lifetime of the application to listen for auth state changes
+  // We declare this variable but don't directly use it since we're keeping the subscription active
   AuthService.subscribeToAuthChanges(async (firebaseUser: FirebaseUser | null) => {
     const store = useAppStore.getState();
     
@@ -307,7 +325,12 @@ if (typeof window !== 'undefined') {
             tasks: localData.tasks || [],
             loggedSessions: localData.loggedSessions || [],
             points: localData.points || 0,
-            streakData: localData.streakData || initialStreakData
+            streakData: localData.streakData || initialStreakData,
+            userStats: {
+              studyPoints: localData.points || 0,
+              totalStudyHours: 0,
+              completedTasks: 0
+            }
           });
         }
       }
@@ -345,20 +368,64 @@ export const useAppStore = create<AppState>()(
         set({ isSyncing: true });
         
         try {
-          // Sync data with Firebase
-          await FirestoreService.syncUserData(state.auth.currentUser.id, {
-            subjects: state.subjects,
-            tasks: state.tasks,
-            loggedSessions: state.loggedSessions,
-            points: state.points,
-            streakData: state.streakData
-          });
+          // Sync individual collections with Firebase
+          // Sync subjects
+          for (const subject of state.subjects) {
+            // For those subjects that don't have a Firebase-generated ID (starting with 'subj-')
+            // We need to create them in Firebase
+            if (subject.id.startsWith('subj-')) {
+              await FirestoreService.addSubject(state.auth.currentUser.id, {
+                name: subject.name,
+                color: subject.color,
+                targetHours: subject.targetHours
+              });
+            }
+          }
+          
+          // Sync tasks
+          for (const task of state.tasks) {
+            if (task.id.startsWith('task-')) {
+              await FirestoreService.addTask(state.auth.currentUser.id, {
+                subjectId: task.subjectId,
+                description: task.description,
+                priority: task.priority,
+                dueDate: task.dueDate
+              });
+            } else {
+              // Update existing tasks
+              await FirestoreService.updateTask(task.id, {
+                completed: task.completed
+              });
+            }
+          }
+          
+          // Sync logged sessions
+          for (const session of state.loggedSessions) {
+            if (session.id.startsWith('sess-')) {
+              await FirestoreService.addLoggedSession(state.auth.currentUser.id, {
+                subjectId: session.subjectId,
+                taskId: session.taskId,
+                startTime: session.startTime,
+                endTime: session.endTime,
+                durationMinutes: session.durationMinutes,
+                notes: session.notes,
+                focusScore: session.focusScore,
+                distractionsLogged: session.distractionsLogged,
+                tasksCompleted: session.tasksCompleted,
+                materials: session.materials,
+                tags: session.tags
+              });
+            }
+          }
           
           // Update user points
           await FirestoreService.updateUserPoints(state.auth.currentUser.id, state.points);
           
           // Update user streak
           await FirestoreService.updateUserStreak(state.auth.currentUser.id, state.streakData);
+          
+          // Now, fetch all data from Firebase to make sure local state is synchronized
+          await get().fetchUserData(state.auth.currentUser.id);
         } catch (error) {
           console.error('Error syncing with Firebase:', error);
         } finally {
@@ -381,8 +448,11 @@ export const useAppStore = create<AppState>()(
         try {
           // Try Firebase auth first
           try {
-            await AuthService.signIn(email, password);
-            return true;
+            const user = await AuthService.signIn(email, password);
+            if (user) {
+              return true;
+            }
+            return false;
           } catch (firebaseError) {
             console.warn('Firebase login failed, falling back to demo accounts:', firebaseError);
             
@@ -403,7 +473,12 @@ export const useAppStore = create<AppState>()(
                   tasks: savedData?.tasks || initialTasks,
                   loggedSessions: savedData?.loggedSessions || [],
                   points: savedData?.points !== undefined ? savedData.points : (user.email === 'admin@example.com' ? 100 : 0),
-                  streakData: savedData?.streakData || initialStreakData
+                  streakData: savedData?.streakData || initialStreakData,
+                  userStats: {
+                    studyPoints: savedData?.points || 0,
+                    totalStudyHours: 0,
+                    completedTasks: 0
+                  }
                 };
                 
                 set({ 
@@ -441,14 +516,34 @@ export const useAppStore = create<AppState>()(
       
       signUp: async (email, password, displayName) => {
         try {
-          await AuthService.signUp(email, password, displayName);
-          return true;
-        } catch (error) {
+          const user = await AuthService.signUp(email, password, displayName);
+          if (user) {
+            // Initialize the user with default data
+            set({
+              subjects: initialSubjects,
+              tasks: initialTasks,
+              loggedSessions: [],
+              points: 0,
+              streakData: initialStreakData,
+              userStats: {
+                studyPoints: 0,
+                totalStudyHours: 0,
+                completedTasks: 0
+              }
+            });
+            
+            // Sync the initial data with Firebase
+            await get().syncWithFirebase();
+            
+            return true;
+          }
+          return false;
+        } catch (error: any) {
           console.error('Sign up error:', error);
           set(state => ({
             auth: {
               ...state.auth,
-              error: 'An error occurred during sign up'
+              error: error.message || 'An error occurred during sign up'
             }
           }));
           return false;
@@ -492,7 +587,12 @@ export const useAppStore = create<AppState>()(
           tasks: [],
           loggedSessions: [],
           points: 0,
-          streakData: initialStreakData
+          streakData: initialStreakData,
+          userStats: {
+            studyPoints: 0,
+            totalStudyHours: 0,
+            completedTasks: 0
+          }
         });
       },
 
@@ -502,6 +602,11 @@ export const useAppStore = create<AppState>()(
       loggedSessions: [],
       points: 0,
       streakData: initialStreakData,
+      userStats: {
+        studyPoints: 0,
+        totalStudyHours: 0,
+        completedTasks: 0
+      },
 
       // Data fetching
       fetchUserData: async (userId) => {
@@ -518,7 +623,13 @@ export const useAppStore = create<AppState>()(
           const loggedSessions = await FirestoreService.getLoggedSessions(userId);
           
           // Get user data (points, streak, etc.)
-          const userData = await FirestoreService.getUserData(userId);
+          const userData = await FirestoreService.getUserData(userId) as FirestoreUserDoc;
+          
+          // Initialize counters based on fetched data
+          if (subjects.length > 0 || tasks.length > 0 || loggedSessions.length > 0) {
+            const data = { subjects, tasks, loggedSessions };
+            initializeCounters(data);
+          }
           
           // Update state with fetched data
           set({
@@ -526,7 +637,12 @@ export const useAppStore = create<AppState>()(
             tasks: tasks.length > 0 ? tasks : initialTasks,
             loggedSessions: loggedSessions || [],
             points: userData?.points || 0,
-            streakData: userData?.streakData || initialStreakData
+            streakData: userData?.streakData || initialStreakData,
+            userStats: {
+              studyPoints: userData?.points || 0,
+              totalStudyHours: 0, // Initialize to 0
+              completedTasks: 0 // Initialize to 0
+            }
           });
           
           // Also save to localStorage as backup
@@ -548,7 +664,12 @@ export const useAppStore = create<AppState>()(
               tasks: localData.tasks || initialTasks,
               loggedSessions: localData.loggedSessions || [],
               points: localData.points || 0,
-              streakData: localData.streakData || initialStreakData
+              streakData: localData.streakData || initialStreakData,
+              userStats: {
+                studyPoints: localData.points || 0,
+                totalStudyHours: 0,
+                completedTasks: 0
+              }
             });
           }
         } finally {
@@ -580,7 +701,26 @@ export const useAppStore = create<AppState>()(
         // Sync with Firebase if online
         if (state.isOnline && state.auth.currentUser) {
           try {
-            await FirestoreService.addSubject(state.auth.currentUser.id, subjectData);
+            const addedSubject = await FirestoreService.addSubject(state.auth.currentUser.id, subjectData);
+            if (addedSubject) {
+              // If Firebase successfully created the subject, update our local state with the Firebase ID
+              set((state) => ({
+                subjects: state.subjects.map(s => 
+                  s.id === newSubject.id ? { ...s, id: addedSubject.id } : s
+                ),
+              }));
+              
+              // Update localStorage with the new Firebase ID
+              if (state.auth.currentUser) {
+                saveUserData(state.auth.currentUser.id, {
+                  subjects: get().subjects,
+                  tasks: state.tasks,
+                  loggedSessions: state.loggedSessions,
+                  points: state.points,
+                  streakData: state.streakData
+                });
+              }
+            }
           } catch (error) {
             console.error('Error adding subject to Firebase:', error);
           }
@@ -615,7 +755,26 @@ export const useAppStore = create<AppState>()(
         // Sync with Firebase if online
         if (state.isOnline && state.auth.currentUser) {
           try {
-            await FirestoreService.addTask(state.auth.currentUser.id, taskData);
+            const addedTask = await FirestoreService.addTask(state.auth.currentUser.id, taskData);
+            if (addedTask) {
+              // If Firebase successfully created the task, update our local state with the Firebase ID
+              set((state) => ({
+                tasks: state.tasks.map(t => 
+                  t.id === newTask.id ? { ...t, id: addedTask.id } : t
+                ),
+              }));
+              
+              // Update localStorage with the new Firebase ID
+              if (state.auth.currentUser) {
+                saveUserData(state.auth.currentUser.id, {
+                  subjects: state.subjects,
+                  tasks: get().tasks,
+                  loggedSessions: state.loggedSessions,
+                  points: state.points,
+                  streakData: state.streakData
+                });
+              }
+            }
           } catch (error) {
             console.error('Error adding task to Firebase:', error);
           }
@@ -639,7 +798,10 @@ export const useAppStore = create<AppState>()(
           });
           return { 
             tasks: updatedTasks, 
-            points: state.points + pointsEarned 
+            userStats: {
+              ...state.userStats || { studyPoints: 0 },
+              studyPoints: (state.userStats?.studyPoints || 0) + pointsEarned
+            }
           };
         });
         
@@ -674,6 +836,37 @@ export const useAppStore = create<AppState>()(
         }
       },
 
+      deleteTask: async (taskId) => {
+        const state = get();
+        
+        // Update local state immediately
+        set((state) => ({
+          tasks: state.tasks.filter(task => task.id !== taskId)
+        }));
+        
+        // Save to localStorage as backup
+        if (state.auth.currentUser) {
+          saveUserData(state.auth.currentUser.id, {
+            subjects: state.subjects,
+            tasks: get().tasks,
+            loggedSessions: state.loggedSessions,
+            points: state.points,
+            streakData: state.streakData
+          });
+        }
+        
+        // Sync with Firebase if online
+        if (state.isOnline && state.auth.currentUser) {
+          try {
+            if (!taskId.startsWith('task-')) {  // Only delete from Firebase if it's a Firebase ID
+              await FirestoreService.deleteTask(taskId);
+            }
+          } catch (error) {
+            console.error('Error deleting task from Firebase:', error);
+          }
+        }
+      },
+
       logSession: async (sessionData) => {
         const state = get();
         const newSession = { 
@@ -690,7 +883,10 @@ export const useAppStore = create<AppState>()(
           
           return {
             loggedSessions: newSessions,
-            points: state.points + earnedPoints,
+            userStats: {
+              ...state.userStats || { studyPoints: 0 },
+              studyPoints: (state.userStats?.studyPoints || 0) + earnedPoints
+            },
             streakData: newStreakData
           };
         });
@@ -709,7 +905,27 @@ export const useAppStore = create<AppState>()(
         // Sync with Firebase if online
         if (state.isOnline && state.auth.currentUser) {
           try {
-            await FirestoreService.addLoggedSession(state.auth.currentUser.id, sessionData);
+            const addedSession = await FirestoreService.addLoggedSession(state.auth.currentUser.id, sessionData);
+            
+            if (addedSession) {
+              // If Firebase successfully created the session, update our local state with the Firebase ID
+              set((state) => ({
+                loggedSessions: state.loggedSessions.map(s => 
+                  s.id === newSession.id ? { ...s, id: addedSession.id } : s
+                ),
+              }));
+              
+              // Update localStorage with the new Firebase ID
+              if (state.auth.currentUser) {
+                saveUserData(state.auth.currentUser.id, {
+                  subjects: state.subjects,
+                  tasks: state.tasks,
+                  loggedSessions: get().loggedSessions,
+                  points: get().points,
+                  streakData: get().streakData
+                });
+              }
+            }
             
             // Update user points and streak in Firestore
             await FirestoreService.updateUserPoints(state.auth.currentUser.id, get().points);
@@ -718,6 +934,9 @@ export const useAppStore = create<AppState>()(
             console.error('Error adding session to Firebase:', error);
           }
         }
+        
+        // Return the created session
+        return newSession;
       },
         
       updateSession: async (updatedSession) => {
@@ -745,7 +964,9 @@ export const useAppStore = create<AppState>()(
         // Sync with Firebase if online
         if (state.isOnline && state.auth.currentUser) {
           try {
-            await FirestoreService.updateLoggedSession(updatedSession.id, updatedSession);
+            if (!updatedSession.id.startsWith('sess-')) { // Only update Firebase if it's a Firebase ID
+              await FirestoreService.updateLoggedSession(updatedSession.id, updatedSession);
+            }
           } catch (error) {
             console.error('Error updating session in Firebase:', error);
           }
@@ -771,7 +992,10 @@ export const useAppStore = create<AppState>()(
           
           return { 
             loggedSessions: updatedSessions,
-            points: Math.max(0, state.points - pointsToDeduct),
+            userStats: {
+              ...state.userStats || { studyPoints: 0 },
+              studyPoints: Math.max(0, (state.userStats?.studyPoints || 0) - pointsToDeduct)
+            },
             streakData: newStreakData
           };
         });
@@ -790,7 +1014,9 @@ export const useAppStore = create<AppState>()(
         // Sync with Firebase if online
         if (state.isOnline && state.auth.currentUser) {
           try {
-            await FirestoreService.deleteLoggedSession(sessionId);
+            if (!sessionId.startsWith('sess-')) { // Only delete from Firebase if it's a Firebase ID
+              await FirestoreService.deleteLoggedSession(sessionId);
+            }
             
             // Update user points and streak in Firestore
             await FirestoreService.updateUserPoints(state.auth.currentUser.id, get().points);

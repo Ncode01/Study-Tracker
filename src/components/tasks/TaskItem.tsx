@@ -7,7 +7,15 @@ import {
   Flex, 
   Badge, 
   IconButton, 
-  Tooltip
+  Tooltip,
+  useToast,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
+  Button
 } from '@chakra-ui/react';
 import { FaTrash, FaRegClock, FaTag } from 'react-icons/fa';
 import { useAppStore } from '../../store/appStore';
@@ -24,9 +32,16 @@ const MotionBox = motion(Box);
 
 export const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
   const [isHovering, setIsHovering] = useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  
   const toggleTask = useAppStore(state => state.toggleTask);
+  const deleteTask = useAppStore(state => state.deleteTask);
   const subjects = useAppStore(state => state.subjects);
   const streakData = useAppStore(state => state.streakData || { currentStreak: 0 });
+  const isOnline = useAppStore(state => state.isOnline);
+  
+  const toast = useToast();
   
   // Get subject info
   const subject = subjects.find(s => s.id === task.subjectId);
@@ -76,10 +91,33 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
   
   // Handle task deletion
   const handleDelete = () => {
-    console.log('Delete task requested:', task.id);
-    // We'll implement this functionality later
-    // For now, we'll just give user feedback
-    alert(`Task "${task.description}" would be deleted (functionality coming soon)`);
+    setIsDeleteAlertOpen(true);
+  };
+  
+  const confirmDelete = async () => {
+    try {
+      await deleteTask(task.id);
+      
+      toast({
+        title: "Task deleted",
+        description: `"${task.description}" has been removed`,
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      
+      toast({
+        title: "Error deleting task",
+        description: "There was an issue removing this task. Please try again.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsDeleteAlertOpen(false);
+    }
   };
   
   // Enhanced particle effect for task completion
@@ -383,6 +421,39 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
           </AnimatePresence>
         </Flex>
       </Box>
+      
+      {/* Delete Confirmation Alert */}
+      <AlertDialog
+        isOpen={isDeleteAlertOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={() => setIsDeleteAlertOpen(false)}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent bg="gray.800" borderColor={palette.primary} borderWidth="1px">
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Delete Task
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              Are you sure you want to delete "{task.description}"? This action cannot be undone.
+              {!isOnline && (
+                <Text color="orange.300" mt={2} fontSize="sm">
+                  You are currently offline. The task will be removed from your device, but will sync with your account when you reconnect.
+                </Text>
+              )}
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={() => setIsDeleteAlertOpen(false)}>
+                Cancel
+              </Button>
+              <Button colorScheme="red" onClick={confirmDelete} ml={3}>
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </Box>
   );
 };

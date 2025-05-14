@@ -9,10 +9,13 @@ import {
   Heading,
   Badge,
   Textarea,
-  ChakraProvider
+  ChakraProvider,
+  Switch,
+  FormControl,
+  FormLabel
 } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaPlay, FaPause, FaStop, FaSave } from 'react-icons/fa';
+import { FaPlay, FaPause, FaStop, FaSave, FaCalendarAlt } from 'react-icons/fa';
 
 // Import custom components and hooks
 import { CustomSelect } from '../common';
@@ -21,6 +24,9 @@ import ClayButton from '../ui/ClayButton';
 import { useAdaptiveTheme, generateEmpatheticMessage } from '../../styles/emotionalDesign';
 import type { MoodType } from '../../styles/emotionalDesign';
 import { createAdaptiveTheme } from '../../styles/theme';
+
+// Import calendar integration
+import { handleStudySessionCompleted } from '../calendar/calendarIntegration';
 
 const MotionBox = motion(Box);
 
@@ -34,6 +40,7 @@ export const StudyTimer: React.FC = () => {
   const [showSessionForm, setShowSessionForm] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [empatheticMessage, setEmpatheticMessage] = useState<string>('');
+  const [addToCalendar, setAddToCalendar] = useState<boolean>(true); // Default to add to calendar
   const intervalRef = useRef<number | null>(null);
   const startTimeRef = useRef<Date | null>(null);
   const minutesRef = useRef<number>(0);
@@ -117,13 +124,14 @@ export const StudyTimer: React.FC = () => {
   };
 
   // Save the session
-  const saveSession = () => {
+  const saveSession = async () => {
     if (!startTimeRef.current || seconds === 0) return;
 
     const endTime = new Date();
     const durationMinutes = Math.floor(seconds / 60);
 
-    logSession({
+    // Log the session and get the created session
+    const newSession = await logSession({
       subjectId: selectedSubjectId,
       taskId: selectedTaskId || undefined,
       startTime: startTimeRef.current,
@@ -132,13 +140,26 @@ export const StudyTimer: React.FC = () => {
       notes: notes.trim() || undefined
     });
 
+    // Add to calendar if the option is enabled
+    if (addToCalendar && newSession) {
+      try {
+        // Wait for the calendar operation to complete
+        await handleStudySessionCompleted(newSession);
+        setToastMessage(`Study session added to calendar and you've earned ${Math.floor(durationMinutes/10)} points!`);
+      } catch (error) {
+        console.error('Error adding session to calendar:', error);
+        setToastMessage(`You've earned ${Math.floor(durationMinutes/10)} points for your ${durationMinutes} minutes of study time.`);
+      }
+    } else {
+      setToastMessage(`You've earned ${Math.floor(durationMinutes/10)} points for your ${durationMinutes} minutes of study time.`);
+    }
+
     // Reset everything
     setSeconds(0);
     setNotes('');
     startTimeRef.current = null;
     setShowSessionForm(false);
-
-    setToastMessage(`You've earned ${Math.floor(durationMinutes/10)} points for your ${durationMinutes} minutes of study time.`);
+    
     setTimeout(() => setToastMessage(null), 5000);
   };
 
@@ -341,6 +362,22 @@ export const StudyTimer: React.FC = () => {
                     rows={3}
                   />
                 </Box>
+                
+                {/* Calendar integration toggle */}
+                <FormControl display="flex" alignItems="center">
+                  <FormLabel htmlFor="calendar-toggle" mb="0" fontSize="sm">
+                    <HStack>
+                      <FaCalendarAlt />
+                      <Text>Add to Calendar</Text>
+                    </HStack>
+                  </FormLabel>
+                  <Switch 
+                    id="calendar-toggle" 
+                    isChecked={addToCalendar}
+                    onChange={() => setAddToCalendar(!addToCalendar)}
+                    colorScheme="blue"
+                  />
+                </FormControl>
                 
                 <HStack gap={4} justifyContent="center">
                   <ClayButton 

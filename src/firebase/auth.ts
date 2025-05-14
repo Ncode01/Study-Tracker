@@ -4,6 +4,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  updateProfile,
   type User as FirebaseUser
 } from 'firebase/auth';
 import { auth } from './config';
@@ -23,20 +24,44 @@ export const signIn = async (email: string, password: string) => {
 
 // Sign up with email and password
 export const signUp = async (email: string, password: string, displayName: string) => {
+  if (!auth) {
+    console.error('Firebase Auth not initialized');
+    throw new Error('Firebase authentication is not available');
+  }
+
   try {
+    // First create the user account
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     
+    // Then update the profile with display name
+    try {
+      await updateProfile(user, {
+        displayName
+      });
+    } catch (profileError) {
+      console.error('Error updating profile:', profileError);
+      // Continue even if profile update fails
+    }
+    
     // Create user profile in Firestore
-    await createUserProfile(user.uid, {
-      email,
-      displayName,
-      username: email.split('@')[0], // Simple username from email
-      points: 0,
-      subjects: [],
-      tasks: [],
-      loggedSessions: []
-    });
+    try {
+      await createUserProfile(user.uid, {
+        email,
+        displayName,
+        username: email.split('@')[0], // Simple username from email
+        points: 0,
+        streakData: {
+          currentStreak: 0,
+          longestStreak: 0,
+          lastActiveDate: null
+        }
+      });
+    } catch (profileError) {
+      console.error('Error creating Firestore profile:', profileError);
+      // We'll continue even if profile creation fails
+      // The user can still log in, and we can create the profile later
+    }
     
     return user;
   } catch (error: any) {
@@ -47,6 +72,11 @@ export const signUp = async (email: string, password: string, displayName: strin
 
 // Sign out
 export const logOut = async () => {
+  if (!auth) {
+    console.error('Firebase Auth not initialized');
+    return false;
+  }
+
   try {
     await signOut(auth);
     return true;
@@ -68,5 +98,11 @@ export const mapFirebaseUser = (firebaseUser: FirebaseUser): Partial<User> => {
 
 // Listen to auth state changes
 export const subscribeToAuthChanges = (callback: (user: FirebaseUser | null) => void) => {
+  if (!auth) {
+    console.error('Firebase Auth not initialized');
+    setTimeout(() => callback(null), 0); // Call with null immediately
+    return () => {}; // Return empty unsubscribe function
+  }
+  
   return onAuthStateChanged(auth, callback);
 };
