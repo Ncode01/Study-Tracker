@@ -98,6 +98,8 @@ const demoUserPasswords: Record<string, string> = {
 const initialSubjects: Subject[] = [
   { id: 'subj-0', name: 'Mathematics', color: '#FF5252', targetHours: 10 },
   { id: 'subj-1', name: 'Programming', color: '#42A5F5', targetHours: 15 },
+  { id: 'subj-2', name: 'Physics', color: '#FFB300', targetHours: 8 },
+  { id: 'subj-3', name: 'Literature', color: '#9CCC65', targetHours: 6 },
 ];
 
 const initialTasks: Task[] = [

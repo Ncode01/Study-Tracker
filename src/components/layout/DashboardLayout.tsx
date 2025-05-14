@@ -29,6 +29,7 @@ import { PointsDisplay } from '../common/PointsDisplay';
 import { FloatingActionButton } from '../common/FloatingActionButton';
 import { BottomNavigation } from '../navigation/BottomNavigation';
 import { Sidebar } from '../navigation/Sidebar';
+import { Calendar } from '../calendar/Calendar';
 import { useAppStore } from '../../store/appStore';
 import { useNavStore } from '../../store/navStore';
 import { 
@@ -59,7 +60,6 @@ export const DashboardLayout: React.FC = () => {
   const logout = useAppStore(state => state.logout);
   const activeTab = useNavStore(state => state.activeTab);
   
-  // For demonstration purposes, using default values instead of accessing non-existent properties
   const studyDuration = 25; // Mock study duration in minutes
   const studyStreak = 3;    // Mock study streak in days
   
@@ -195,11 +195,11 @@ export const DashboardLayout: React.FC = () => {
           justifyContent="space-between" 
           alignItems="center"
           mb={8}
-        >
-          <Heading size="lg" color="gray.200">
+        >          <Heading size="lg" color="gray.200">
             {activeTab === 'dashboard' && 'Dashboard'}
             {activeTab === 'timer' && 'Study Timer'}
             {activeTab === 'history' && 'Study History'}
+            {activeTab === 'calendar' && 'Calendar'}
             {activeTab === 'profile' && 'User Profile'}
           </Heading>
           
@@ -471,11 +471,15 @@ export const DashboardLayout: React.FC = () => {
                 </GlassmorphicPanel>
               </Box>
             </SpatialTransition>
-          )}
-          
-          {activeTab === 'history' && (
+          )}            {activeTab === 'history' && (
             <SpatialTransition isActive={activeTab === 'history'} mood={mood}>
               <HistoryView />
+            </SpatialTransition>
+          )}          {activeTab === 'calendar' && (
+            <SpatialTransition isActive={activeTab === 'calendar'} mood={mood}>
+              <GlassmorphicPanel mood={mood} maxH="calc(100vh - 140px)" overflowY="hidden">
+                <Calendar />
+              </GlassmorphicPanel>
             </SpatialTransition>
           )}
           
