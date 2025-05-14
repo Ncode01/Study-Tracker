@@ -280,8 +280,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
         transition="all 0.3s"
         _hover={{
           borderColor: `${borderColor}60`,
-          transform: "translateY(-2px)",
-          boxShadow: `0 6px 16px rgba(0,0,0,0.4), 0 0 0 2px ${borderColor}40`
+          transform: "translateY(-2px)"
         }}
         position="relative"
         overflow="hidden"

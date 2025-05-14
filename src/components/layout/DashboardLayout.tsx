@@ -14,11 +14,30 @@ import {
   MenuList,
   MenuItem,
   Flex,
+  Grid,
+  GridItem,
   useColorModeValue,
   useDisclosure,
-  Badge
+  Badge,
+  VStack,
+  Stat,
+  StatLabel,
+  StatNumber,
+  StatHelpText,
+  StatArrow
 } from '@chakra-ui/react';
-import { FaMoon, FaSun, FaClipboardCheck, FaBook, FaSignOutAlt, FaUser } from 'react-icons/fa';
+import { 
+  FaMoon, 
+  FaSun, 
+  FaClipboardCheck, 
+  FaBook, 
+  FaSignOutAlt, 
+  FaUser, 
+  FaCalendarAlt,
+  FaChartLine,
+  FaTasks,
+  FaUserGraduate
+} from 'react-icons/fa';
 import { TaskList } from '../tasks/TaskList';
 import { TaskForm } from '../tasks/TaskForm';
 import { SubjectList } from '../subjects/SubjectList';
@@ -33,7 +52,6 @@ import { Calendar } from '../calendar/Calendar';
 import { useAppStore } from '../../store/appStore';
 import { useNavStore } from '../../store/navStore';
 import { 
-  BentoGrid, 
   BentoItem, 
   GlassmorphicPanel, 
   ElasticScroll, 
@@ -55,6 +73,7 @@ export const DashboardLayout: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { isOpen: isTaskFormOpen, onOpen: onTaskFormOpen, onClose: onTaskFormClose } = useDisclosure();
   const timerRef = useRef<HTMLDivElement>(null);
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   
   const currentUser = useAppStore(state => state.auth.currentUser);
   const logout = useAppStore(state => state.logout);
@@ -107,23 +126,57 @@ export const DashboardLayout: React.FC = () => {
       timerRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   };
+  
+  const handlePrevMonth = () => {
+    const prevMonth = new Date(currentMonth);
+    prevMonth.setMonth(prevMonth.getMonth() - 1);
+    setCurrentMonth(prevMonth);
+  };
 
-  // Define bento areas for dashboard grid layout
-  const dashboardAreas = [
-    { id: 'subjects', rowSpan: 1, colSpan: 4, priority: 1 },
-    { id: 'tasks', rowSpan: 1, colSpan: 8, priority: 2 },
-    { id: 'stats', rowSpan: 1, colSpan: 6, priority: 3 },
-    { id: 'progress', rowSpan: 1, colSpan: 6, priority: 4 },
-  ];
+  const handleNextMonth = () => {
+    const nextMonth = new Date(currentMonth);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    setCurrentMonth(nextMonth);
+  };
 
   // Stats data for visualization
   const studyStatsByCat = [
-    { category: 'Math', hours: 8.5, color: '#FF5252' },
-    { category: 'Programming', hours: 12, color: '#42A5F5' },
-    { category: 'Physics', hours: 5.5, color: '#FFB300' },
-    { category: 'Literature', hours: 3, color: '#9CCC65' },
+    { category: 'Math', hours: 8.5, color: '#FF5252', percentage: 40 },
+    { category: 'Programming', hours: 12, color: '#42A5F5', percentage: 20 },
+    { category: 'Physics', hours: 5.5, color: '#FFB300', percentage: 30 },
+    { category: 'Literature', hours: 3, color: '#9CCC65', percentage: 10 },
   ];
 
+  // Mock data for recent activity
+  const recentActivity = [
+    { id: 1, user: 'You', action: 'Completed Physics homework', timestamp: '10:45 AM', subject: 'Physics' },
+    { id: 2, user: 'You', action: 'Started Math practice', timestamp: '9:30 AM', subject: 'Math' },
+    { id: 3, user: 'You', action: 'Added new task', timestamp: '8:15 AM', subject: 'Programming' },
+  ];
+
+  // Mock study metrics
+  const studyMetrics = {
+    studyHours: { current: 25.5, change: 8.2, direction: 'increase' },
+    tasksCompleted: { current: 18, change: 5, direction: 'increase' },
+  };
+
+  // Generate calendar days
+  const getDaysInMonth = (year: number, month: number) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (year: number, month: number) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  const monthName = currentMonth.toLocaleString('default', { month: 'long' });
+  const year = currentMonth.getFullYear();
+  const daysInMonth = getDaysInMonth(year, currentMonth.getMonth());
+  const firstDayOfMonth = getFirstDayOfMonth(year, currentMonth.getMonth());
+  
+  // Mock data for hours studied on specific days
+  const studyDays = [2, 5, 8, 9, 12, 15, 18, 19, 23, 26, 29];
+  
   // Progress data for visualization
   const goalProgress = {
     total: 5,
@@ -240,226 +293,248 @@ export const DashboardLayout: React.FC = () => {
         <Container maxW="container.xl" px={{ base: 0, md: 4 }}>
           {activeTab === 'dashboard' && (
             <SpatialTransition isActive={activeTab === 'dashboard'} mood={mood}>
-              {/* Modern Bento Grid Layout for Dashboard */}
-              <BentoGrid 
-                areas={dashboardAreas} 
-                gap={6} 
-                mood={mood}
-                staggerAnimation={true}
+              {/* Updated layout inspired by medical dashboard */}
+              <Grid
+                templateColumns={{ base: "1fr", lg: "repeat(12, 1fr)" }}
+                gap={6}
               >
-                {/* Subjects Item */}
-                <BentoItem mood={mood} glassmorphic={true} hoverEffect="glow">
-                  <HStack mb={4}>
-                    <Icon as={FaBook} color={palette.accent} />
-                    <Heading size="md">My Subjects</Heading>
-                  </HStack>
-                  <SubjectForm />
-                  <Box my={4} height="1px" bg="gray.600" />
-                  <ElasticScroll maxHeight="300px" mood={mood}>
-                    <SubjectList onSelectSubject={handleSubjectSelect} />
-                  </ElasticScroll>
-                </BentoItem>
-                
-                {/* Tasks Item */}
-                <BentoItem mood={mood} glassmorphic={true} hoverEffect="lift">
-                  <HStack mb={4}>
-                    <Icon as={FaClipboardCheck} color={palette.accent} />
-                    <Heading size="md">
-                      {selectedSubjectId ? 'Subject Tasks' : 'All Tasks'}
-                    </Heading>
-                    {selectedSubjectId && (
-                      <Button 
-                        size="xs" 
-                        onClick={() => setSelectedSubjectId(null)}
-                        variant="outline"
-                        ml={2}
+                {/* Top row - Key metrics */}
+                <GridItem colSpan={{ base: 1, lg: 3 }}>
+                  <BentoItem mood={mood} glassmorphic={true} hoverEffect="lift">
+                    <HStack align="flex-start">
+                      <MotionBox 
+                        initial={{ scale: 0.9 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
                       >
-                        Show All
-                      </Button>
-                    )}
-                  </HStack>
-                  <TaskForm isOpen={isTaskFormOpen} onClose={onTaskFormClose} />
-                  <ElasticScroll maxHeight="400px" mood={mood}>
-                    <TaskList subjectId={selectedSubjectId || undefined} />
-                  </ElasticScroll>
-                </BentoItem>
+                        <Icon as={FaUserGraduate} color={palette.accent} boxSize={6} />
+                      </MotionBox>
+                      <Stat>
+                        <StatLabel>Study Sessions</StatLabel>
+                        <StatNumber>{studyStreak}</StatNumber>
+                        <StatHelpText>
+                          <StatArrow type="increase" />
+                          Day Streak
+                        </StatHelpText>
+                      </Stat>
+                    </HStack>
+                  </BentoItem>
+                </GridItem>
                 
-                {/* Stats Card with interactive visualization */}
-                <BentoItem mood={mood} glassmorphic={true} hoverEffect="scale">
-                  <Heading size="md" mb={4}>Study Stats</Heading>
-                  
-                  <Box position="relative" height="200px">
-                    {/* Interactive 3D visualization of study time by category */}
-                    <ThreeDProgressRing progress={0.75} mood={mood} size={200} />
-                    
-                    <Flex 
-                      position="absolute" 
-                      top="50%" 
-                      left="50%" 
-                      transform="translate(-50%, -50%)" 
-                      direction="column" 
-                      align="center"
-                    >
-                      <Text fontSize="2xl" fontWeight="bold">{studyStreak}</Text>
-                      <Text fontSize="sm" color={palette.accent}>Day Streak</Text>
+                <GridItem colSpan={{ base: 1, lg: 3 }}>
+                  <BentoItem mood={mood} glassmorphic={true} hoverEffect="lift">
+                    <HStack align="flex-start">
+                      <Icon as={FaChartLine} color={palette.accent} boxSize={6} />
+                      <Stat>
+                        <StatLabel>Total Study Time</StatLabel>
+                        <StatNumber>{studyMetrics.studyHours.current}h</StatNumber>
+                        <StatHelpText>
+                          <StatArrow type={studyMetrics.studyHours.direction as any} />
+                          {studyMetrics.studyHours.change}h
+                        </StatHelpText>
+                      </Stat>
+                    </HStack>
+                  </BentoItem>
+                </GridItem>
+                
+                <GridItem colSpan={{ base: 1, lg: 3 }}>
+                  <BentoItem mood={mood} glassmorphic={true} hoverEffect="lift">
+                    <HStack align="flex-start">
+                      <Icon as={FaTasks} color={palette.accent} boxSize={6} />
+                      <Stat>
+                        <StatLabel>Tasks Completed</StatLabel>
+                        <StatNumber>{studyMetrics.tasksCompleted.current}</StatNumber>
+                        <StatHelpText>
+                          <StatArrow type={studyMetrics.tasksCompleted.direction as any} />
+                          {studyMetrics.tasksCompleted.change}
+                        </StatHelpText>
+                      </Stat>
+                    </HStack>
+                  </BentoItem>
+                </GridItem>
+                
+                <GridItem colSpan={{ base: 1, lg: 3 }}>
+                  <BentoItem mood={mood} glassmorphic={true} hoverEffect="lift">
+                    <HStack align="flex-start">
+                      <Icon as={FaClipboardCheck} color={palette.accent} boxSize={6} />
+                      <Stat>
+                        <StatLabel>Completion Rate</StatLabel>
+                        <StatNumber>{goalProgress.progress * 100}%</StatNumber>
+                        <StatHelpText>
+                          <StatArrow type="increase" />
+                          {goalProgress.completed} of {goalProgress.total}
+                        </StatHelpText>
+                      </Stat>
+                    </HStack>
+                  </BentoItem>
+                </GridItem>
+                
+                {/* Middle row - Calendar & Tasks */}
+                <GridItem colSpan={{ base: 1, lg: 5 }}>
+                  <BentoItem mood={mood} glassmorphic={true} hoverEffect="glow" h="100%">
+                    <Flex justify="space-between" align="center" mb={4}>
+                      <Icon as={FaCalendarAlt} color={palette.accent} />
+                      <Heading size="md">{monthName} {year}</Heading>
+                      <HStack>
+                        <Button size="sm" onClick={handlePrevMonth} variant="ghost">
+                          &lt;
+                        </Button>
+                        <Button size="sm" onClick={handleNextMonth} variant="ghost">
+                          &gt;
+                        </Button>
+                      </HStack>
                     </Flex>
-                  </Box>
-                  
-                  <Box mt={4}>
-                    {studyStatsByCat.map((stat, index) => (
-                      <Flex key={index} align="center" mb={2}>
-                        <Box 
-                          w="12px" 
-                          h="12px" 
-                          borderRadius="full" 
-                          bg={stat.color} 
-                          mr={2} 
-                          boxShadow={`0 0 8px ${stat.color}80`}
-                        />
-                        <Text fontSize="sm" flex="1">{stat.category}</Text>
-                        <Text fontSize="sm" fontWeight="bold">{stat.hours}h</Text>
+                    
+                    <Grid templateColumns="repeat(7, 1fr)" gap={2}>
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                        <GridItem key={day} textAlign="center">
+                          <Text fontSize="xs" fontWeight="bold">{day}</Text>
+                        </GridItem>
+                      ))}
+                      
+                      {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                        <GridItem key={`empty-${i}`} />
+                      ))}
+                      
+                      {Array.from({ length: daysInMonth }).map((_, i) => {
+                        const day = i + 1;
+                        const isStudyDay = studyDays.includes(day);
+                        return (
+                          <GridItem key={`day-${day}`} textAlign="center">
+                            <Box
+                              w="30px"
+                              h="30px"
+                              lineHeight="30px"
+                              borderRadius="full"
+                              mx="auto"
+                              bg={isStudyDay ? `${palette.accent}40` : 'transparent'}
+                              color={isStudyDay ? 'white' : 'inherit'}
+                            >
+                              {day}
+                            </Box>
+                          </GridItem>
+                        );
+                      })}
+                    </Grid>
+                    
+                    <Box mt={6} mb={2}>
+                      <Heading size="sm" mb={2}>Study Stats</Heading>
+                      <Flex justify="space-between" align="center">
+                        <Text fontSize="sm">Last 7 days</Text>
+                        <Badge colorScheme="green">+8%</Badge>
                       </Flex>
-                    ))}
-                  </Box>
-                </BentoItem>
+                    </Box>
+                  </BentoItem>
+                </GridItem>
                 
-                {/* Goal Progress with liquid animation */}
-                <BentoItem mood={mood} glassmorphic={true} hoverEffect="glow">
-                  <Heading size="md" mb={4}>Goals Progress</Heading>
-                  
-                  {/* Liquid progress bar */}
-                  <Box 
-                    position="relative" 
-                    height="30px" 
-                    bg="rgba(0,0,0,0.2)" 
-                    borderRadius="full" 
-                    overflow="hidden"
-                    mb={4}
-                    sx={{
-                      "@keyframes wave": {
-                        "0%": { backgroundPositionX: "0%" },
-                        "100%": { backgroundPositionX: "100%" }
-                      }
-                    }}
-                  >
-                    <MotionBox
-                      position="absolute"
-                      top="0"
-                      left="0"
-                      height="100%"
-                      width={`${goalProgress.progress * 100}%`}
-                      borderRadius="full"
-                      bgGradient={`linear(to-r, ${palette.primary}, ${palette.accent})`}
-                      initial={{ width: 0 }}
-                      animate={{ 
-                        width: `${goalProgress.progress * 100}%`,
-                        transition: { duration: 1.5, ease: "easeOut" }
-                      }}
-                      // Liquid wave effect
-                      _after={{
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='0.2' d='M0,192L60,208C120,224,240,256,360,250.7C480,245,600,203,720,197.3C840,192,960,224,1080,224C1200,224,1320,192,1380,176L1440,160L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z'%3E%3C/path%3E%3C/svg%3E") repeat-x`,
-                        backgroundSize: '100% 100%',
-                        animation: 'wave 8s linear infinite',
-                      }}
-                    />
-                    
-                    {/* Percentage text overlay */}
-                    <Flex 
-                      position="absolute" 
-                      top="0" 
-                      left="0" 
-                      right="0" 
-                      bottom="0" 
-                      align="center" 
-                      justify="center"
-                    >
-                      <Text 
-                        fontSize="sm" 
-                        fontWeight="bold"
-                        color="white"
-                        textShadow="0 0 4px rgba(0,0,0,0.5)"
+                <GridItem colSpan={{ base: 1, lg: 7 }}>
+                  <BentoItem mood={mood} glassmorphic={true} hoverEffect="lift" h="100%">
+                    <HStack mb={4} justify="space-between">
+                      <Flex align="center">
+                        <Icon as={FaClipboardCheck} color={palette.accent} mr={2} />
+                        <Heading size="md">
+                          {selectedSubjectId ? 'Subject Tasks' : 'All Tasks'}
+                        </Heading>
+                      </Flex>
+                      <Button 
+                        size="sm" 
+                        onClick={onTaskFormOpen} 
+                        variant="solid"
+                        colorScheme="blue"
                       >
-                        {Math.round(goalProgress.progress * 100)}%
-                      </Text>
-                    </Flex>
-                  </Box>
-                  
-                  {/* Goal stats and details */}
-                  <HStack justify="space-between" mb={2}>
-                    <Text fontSize="sm">Completed Goals</Text>
-                    <Text fontSize="sm" fontWeight="bold">{goalProgress.completed} of {goalProgress.total}</Text>
-                  </HStack>
-                  
-                  {/* Goal list */}
-                  <Box mt={4} pl={2}>
-                    <Flex align="center" mb={2}>
-                      <Box 
-                        w="10px" 
-                        h="10px" 
-                        borderRadius="full" 
-                        bg="green.400" 
-                        mr={2} 
-                      />
-                      <Text fontSize="sm" flex="1">Complete Math Assignment</Text>
-                      <Badge colorScheme="green">Done</Badge>
-                    </Flex>
+                        Add Task
+                      </Button>
+                    </HStack>
+                    <TaskForm isOpen={isTaskFormOpen} onClose={onTaskFormClose} />
+                    <ElasticScroll maxHeight="350px" mood={mood}>
+                      <TaskList subjectId={selectedSubjectId || undefined} />
+                    </ElasticScroll>
+                  </BentoItem>
+                </GridItem>
+                
+                {/* Bottom row - Subjects & Distribution */}
+                <GridItem colSpan={{ base: 1, lg: 4 }}>
+                  <BentoItem mood={mood} glassmorphic={true} hoverEffect="glow" h="100%">
+                    <HStack mb={4}>
+                      <Icon as={FaBook} color={palette.accent} />
+                      <Heading size="md">My Subjects</Heading>
+                    </HStack>
+                    <SubjectForm />
+                    <Box my={4} height="1px" bg="gray.600" />
+                    <ElasticScroll maxHeight="300px" mood={mood}>
+                      <SubjectList onSelectSubject={handleSubjectSelect} />
+                    </ElasticScroll>
+                  </BentoItem>
+                </GridItem>
+                
+                <GridItem colSpan={{ base: 1, lg: 4 }}>
+                  <BentoItem mood={mood} glassmorphic={true} hoverEffect="scale" h="100%">
+                    <Heading size="md" mb={4}>Study Distribution</Heading>
                     
-                    <Flex align="center" mb={2}>
-                      <Box 
-                        w="10px" 
-                        h="10px" 
-                        borderRadius="full" 
-                        bg="green.400" 
-                        mr={2} 
-                      />
-                      <Text fontSize="sm" flex="1">Study for History Test</Text>
-                      <Badge colorScheme="green">Done</Badge>
-                    </Flex>
+                    <Box position="relative" height="200px">
+                      {/* Interactive 3D visualization of study time by category */}
+                      <ThreeDProgressRing progress={0.75} mood={mood} size={200} />
+                      
+                      <Flex 
+                        position="absolute" 
+                        top="50%" 
+                        left="50%" 
+                        transform="translate(-50%, -50%)" 
+                        direction="column" 
+                        align="center"
+                      >
+                        <Text fontSize="sm" color={palette.accent}>Hours</Text>
+                        <Text fontSize="2xl" fontWeight="bold">{studyStatsByCat.reduce((acc, s) => acc + s.hours, 0)}</Text>
+                      </Flex>
+                    </Box>
                     
-                    <Flex align="center" mb={2}>
-                      <Box 
-                        w="10px" 
-                        h="10px" 
-                        borderRadius="full" 
-                        bg="green.400" 
-                        mr={2} 
-                      />
-                      <Text fontSize="sm" flex="1">Read Chapter 5</Text>
-                      <Badge colorScheme="green">Done</Badge>
-                    </Flex>
+                    <Box mt={4}>
+                      {studyStatsByCat.map((stat, index) => (
+                        <Flex key={index} align="center" mb={2}>
+                          <Box 
+                            w="12px" 
+                            h="12px" 
+                            borderRadius="full" 
+                            bg={stat.color} 
+                            mr={2} 
+                            boxShadow={`0 0 8px ${stat.color}80`}
+                          />
+                          <Text fontSize="sm" flex="1">{stat.category}</Text>
+                          <Text fontSize="sm" fontWeight="bold">{stat.percentage}%</Text>
+                        </Flex>
+                      ))}
+                    </Box>
+                  </BentoItem>
+                </GridItem>
+                
+                <GridItem colSpan={{ base: 1, lg: 4 }}>
+                  <BentoItem mood={mood} glassmorphic={true} hoverEffect="glow" h="100%">
+                    <Heading size="md" mb={4}>Recent Activity</Heading>
                     
-                    <Flex align="center" mb={2}>
-                      <Box 
-                        w="10px" 
-                        h="10px" 
-                        borderRadius="full" 
-                        bg="gray.500" 
-                        mr={2} 
-                      />
-                      <Text fontSize="sm" flex="1">Write Research Paper</Text>
-                      <Badge colorScheme="gray">Pending</Badge>
-                    </Flex>
+                    <VStack spacing={4} align="stretch">
+                      {recentActivity.map((activity) => (
+                        <HStack key={activity.id} spacing={3}>
+                          <Avatar 
+                            size="sm" 
+                            src={`https://api.dicebear.com/7.x/initials/svg?seed=${currentUser?.username || 'User'}`} 
+                          />
+                          <Box flex="1">
+                            <Text fontWeight="medium">{activity.action}</Text>
+                            <HStack>
+                              <Text fontSize="xs" color="gray.500">{activity.timestamp}</Text>
+                              <Badge colorScheme="blue" variant="subtle">{activity.subject}</Badge>
+                            </HStack>
+                          </Box>
+                        </HStack>
+                      ))}
+                    </VStack>
                     
-                    <Flex align="center">
-                      <Box 
-                        w="10px" 
-                        h="10px" 
-                        borderRadius="full" 
-                        bg="gray.500" 
-                        mr={2} 
-                      />
-                      <Text fontSize="sm" flex="1">Review Project Code</Text>
-                      <Badge colorScheme="gray">Pending</Badge>
-                    </Flex>
-                  </Box>
-                </BentoItem>
-              </BentoGrid>
+                    <Button size="sm" variant="link" colorScheme="blue" mt={4} alignSelf="flex-end">
+                      View All Activity
+                    </Button>
+                  </BentoItem>
+                </GridItem>
+              </Grid>
             </SpatialTransition>
           )}
           

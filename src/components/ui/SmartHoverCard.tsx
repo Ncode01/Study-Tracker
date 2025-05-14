@@ -138,7 +138,6 @@ const SmartHoverCard = React.forwardRef<HTMLDivElement, SmartHoverCardProps>(({
       }}
       style={{ 
         scale,
-        boxShadow: shadow,
         // Only apply 3D effects if not reduced motion
         ...(rotateEffect && !prefersReducedMotion ? { 
           rotateX,

@@ -108,8 +108,7 @@ export const SubjectItem: React.FC<SubjectItemProps> = ({
             boxShadow={`0 2px 8px ${subject.color}30`}
             transition="all 0.3s cubic-bezier(0.19, 1, 0.22, 1)"
             _hover={{
-              transform: 'scale(1.05)',
-              boxShadow: `0 4px 12px ${subject.color}40`
+              transform: 'scale(1.05)'
             }}
           >
             <Icon as={FaClock} mr={1} fontSize="10px" />

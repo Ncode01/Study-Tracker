@@ -132,11 +132,11 @@ export const BentoItem: React.FC<BentoItemProps> = ({
   // Define hover animations based on effect type
   const hoverAnimations = {
     lift: { 
-      y: -10, 
-      boxShadow: `0 20px 25px -5px ${palette.primary}30, 0 10px 10px -5px ${palette.primary}20` 
+      y: -10
     },
     glow: { 
-      boxShadow: `0 0 20px 5px ${palette.accent}40` 
+      // Keep empty object to maintain the animation type without shadow
+      // Filter effects would be handled separately if needed
     },
     scale: { 
       scale: 1.02 
