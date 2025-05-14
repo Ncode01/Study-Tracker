@@ -135,8 +135,7 @@ const SmartHoverCard = React.forwardRef<HTMLDivElement, SmartHoverCardProps>(({
           x.set(0);
           y.set(0);
         }
-      }}
-      style={{ 
+      }}      style={{ 
         scale,
         // Only apply 3D effects if not reduced motion
         ...(rotateEffect && !prefersReducedMotion ? { 
@@ -146,6 +145,8 @@ const SmartHoverCard = React.forwardRef<HTMLDivElement, SmartHoverCardProps>(({
         } : {}),
         // Apply a glow effect on hover if enabled
         ...(glowEffect && isHovered ? { filter: glow } : {}),
+        // Apply dynamic shadow based on card tilt
+        boxShadow: shadow,
         // Add user-provided style and preserve-3d
         ...style,
         transform: 'perspective(1200px)'
