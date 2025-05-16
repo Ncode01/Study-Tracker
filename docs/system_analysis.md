@@ -214,7 +214,7 @@ interface LoggedSession {
 
 1. **No Persistence**: Data is not saved between sessions (no backend/database)
 2. **Limited Auth System**: Basic auth without registration or password recovery
-3. **No Analytics**: Limited data visualization for progress tracking
+3. **No Analytics**: Limited data visualization for progress tracking 
 4. **No Advanced Planning**: No recurring tasks or complex scheduling
 
 ### 5.3 Current Data Flow
