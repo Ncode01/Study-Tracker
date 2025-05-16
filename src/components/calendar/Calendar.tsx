@@ -49,9 +49,14 @@ export const Calendar: React.FC = () => {
 
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
-
   const handleDateClick = (info: any) => {
-    setSelectedDate({ start: info.date, end: info.date, allDay: true });
+    setSelectedDate({ 
+      start: info.date, 
+      end: info.date, 
+      allDay: true, 
+      view: info.view || {},
+      jsEvent: null 
+    });
     onClassFormOpen();
   };
 
@@ -95,20 +100,30 @@ export const Calendar: React.FC = () => {
           >
             Add
           </MenuButton>
-          <MenuList>
-            <MenuItem 
+          <MenuList>            <MenuItem 
               icon={<Icon as={FaCalendar} />} 
               onClick={() => {
-                setSelectedDate({ start: new Date(), end: new Date(), allDay: true });
+                setSelectedDate({ 
+                  start: new Date(), 
+                  end: new Date(), 
+                  allDay: true, 
+                  view: {}, 
+                  jsEvent: null 
+                });
                 onClassFormOpen();
               }}
             >
               Class Schedule
-            </MenuItem>
-            <MenuItem 
+            </MenuItem>            <MenuItem 
               icon={<Icon as={FaBell} />} 
               onClick={() => {
-                setSelectedDate({ start: new Date(), end: new Date(), allDay: true });
+                setSelectedDate({ 
+                  start: new Date(), 
+                  end: new Date(), 
+                  allDay: true,
+                  view: {},
+                  jsEvent: null
+                });
                 onReminderFormOpen();
               }}
             >
