@@ -1,4 +1,3 @@
-// src/components/history/HistoryView.tsx
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
@@ -34,22 +33,18 @@ export const HistoryView: React.FC = () => {
   const [selectedSession, setSelectedSession] = useState<LoggedSession | null>(null);
   const bgColor = useColorModeValue('white', 'gray.800');
   
-  // Default filter state
   const [filters, setFilters] = useState<SessionFiltersType>({
     dateRange: '30days',
     taskStatus: 'all'
   });
   
-  // Apply filters to sessions
   const filteredSessions = useMemo(() => {
     let filtered = [...loggedSessions];
     
-    // Filter by subject
     if (filters.subjectId) {
       filtered = filtered.filter(session => session.subjectId === filters.subjectId);
     }
     
-    // Filter by date range
     const today = new Date();
     if (filters.dateRange === '7days') {
       const startDate = subDays(today, 7);
@@ -67,7 +62,6 @@ export const HistoryView: React.FC = () => {
       );
       
       if (filters.endDate) {
-        // Set end date to end of the day
         const endDate = new Date(filters.endDate);
         endDate.setHours(23, 59, 59, 999);
         
@@ -77,20 +71,17 @@ export const HistoryView: React.FC = () => {
       }
     }
     
-    // Sort by date (most recent first)
     return filtered.sort((a, b) => 
       new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
     );
   }, [loggedSessions, filters]);
   
-  // Prepare weekly summary data for the chart
   const weeklySummaryData = useMemo(() => {
     const weeklyData: Record<string, WeeklySummary> = {};
     
-    // Group sessions by week
     filteredSessions.forEach(session => {
       const startDate = new Date(session.startTime);
-      const weekStart = startOfWeek(startDate, { weekStartsOn: 1 }); // Start week on Monday
+      const weekStart = startOfWeek(startDate, { weekStartsOn: 1 });
       const weekKey = format(weekStart, 'yyyy-MM-dd');
       const hours = session.durationMinutes / 60;
       
@@ -102,10 +93,8 @@ export const HistoryView: React.FC = () => {
           subjectBreakdown: {}
         };
         
-        // Calculate target hours for the week
         subjects.forEach(subject => {
           if (subject.targetHours) {
-            // Weekly target is annual target / 52 weeks
             const weeklyTarget = subject.targetHours / 52;
             weeklyData[weekKey].targetHours += weeklyTarget;
           }
@@ -114,20 +103,17 @@ export const HistoryView: React.FC = () => {
       
       weeklyData[weekKey].totalHours += hours;
       
-      // Add to subject breakdown
       if (!weeklyData[weekKey].subjectBreakdown[session.subjectId]) {
         weeklyData[weekKey].subjectBreakdown[session.subjectId] = 0;
       }
       weeklyData[weekKey].subjectBreakdown[session.subjectId] += hours;
     });
     
-    // Convert to array and sort by week
     return Object.values(weeklyData).sort((a, b) => 
       new Date(a.week).getTime() - new Date(b.week).getTime()
     );
   }, [filteredSessions, subjects]);
   
-  // Prepare CSV export data
   const csvData = useMemo(() => {
     return filteredSessions.map(session => {
       const subject = subjects.find(s => s.id === session.subjectId);
@@ -149,18 +135,15 @@ export const HistoryView: React.FC = () => {
     });
   }, [filteredSessions, subjects, tasks]);
   
-  // Handle opening the session details modal
   const handleSessionClick = useCallback((session: LoggedSession) => {
     setSelectedSession(session);
     onOpen();
   }, [onOpen]);
   
-  // Handle filter changes
   const handleFilterChange = useCallback((newFilters: SessionFiltersType) => {
     setFilters(newFilters);
   }, []);
   
-  // Calculate total study hours
   const totalHours = filteredSessions.reduce(
     (sum, session) => sum + (session.durationMinutes / 60), 
     0
@@ -172,7 +155,6 @@ export const HistoryView: React.FC = () => {
         <Heading size="lg">Study History</Heading>
         
         <HStack>
-          {/* Streak Badge */}
           {streakData.currentStreak > 0 && (
             <Badge 
               colorScheme="orange" 
@@ -199,7 +181,6 @@ export const HistoryView: React.FC = () => {
             </Badge>
           )}
           
-          {/* CSV Export Button */}
           {filteredSessions.length > 0 && (
             <CSVLink 
               data={csvData} 
@@ -213,13 +194,11 @@ export const HistoryView: React.FC = () => {
         </HStack>
       </Flex>
       
-      {/* Filters */}
       <SessionFilters 
         filters={filters} 
         onFilterChange={handleFilterChange} 
       />
       
-      {/* Summary Stats */}
       {filteredSessions.length > 0 && (
         <MotionBox
           initial={{ opacity: 0, y: 20 }}
@@ -264,7 +243,6 @@ export const HistoryView: React.FC = () => {
         </MotionBox>
       )}
       
-      {/* Charts */}
       <Grid 
         templateColumns={{ base: "1fr", lg: "1fr 1fr" }}
         gap={6}
@@ -294,7 +272,6 @@ export const HistoryView: React.FC = () => {
         </GridItem>
       </Grid>
       
-      {/* Recent Sessions List */}
       <MotionBox
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -376,7 +353,6 @@ export const HistoryView: React.FC = () => {
         )}
       </MotionBox>
       
-      {/* Session Detail Modal */}
       <SessionDetailsModal
         isOpen={isOpen}
         onClose={onClose}

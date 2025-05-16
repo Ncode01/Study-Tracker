@@ -10,7 +10,8 @@ import {
   useDisclosure,
   Button,
   Flex,
-  Menu,  MenuButton,
+  Menu,
+  MenuButton,
   MenuList,
   MenuItem,
   Icon,
@@ -32,7 +33,6 @@ export const Calendar: React.FC = () => {
   const { isOpen: isEventDetailsOpen, onOpen: onEventDetailsOpen, onClose: onEventDetailsClose } = useDisclosure();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Track window size for responsive layout
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -45,16 +45,16 @@ export const Calendar: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [selectedDate, setSelectedDate] = useState<DateSelectArg | null>(null);
   
-  // Get calendar data from calendarStore
   const { events, classes, reminders } = useCalendarStore();
 
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
+
   const handleDateClick = (info: any) => {
-    // Fix type issue with the date
-    setSelectedDate({ start: info.date, end: info.date, allDay: true } as DateSelectArg);
+    setSelectedDate({ start: info.date, end: info.date, allDay: true });
     onClassFormOpen();
   };
+
   const handleDateSelect = (selectInfo: DateSelectArg) => {
     setSelectedDate(selectInfo);
     onReminderFormOpen();
@@ -75,7 +75,9 @@ export const Calendar: React.FC = () => {
       });
       onEventDetailsOpen();
     }
-  };  return (
+  };
+
+  return (
     <Box p={0}>
       <Flex mb={4} justifyContent="space-between" alignItems="center">
         <Box>
@@ -97,7 +99,7 @@ export const Calendar: React.FC = () => {
             <MenuItem 
               icon={<Icon as={FaCalendar} />} 
               onClick={() => {
-                setSelectedDate({ start: new Date(), end: new Date(), allDay: true } as DateSelectArg);
+                setSelectedDate({ start: new Date(), end: new Date(), allDay: true });
                 onClassFormOpen();
               }}
             >
@@ -106,7 +108,7 @@ export const Calendar: React.FC = () => {
             <MenuItem 
               icon={<Icon as={FaBell} />} 
               onClick={() => {
-                setSelectedDate({ start: new Date(), end: new Date(), allDay: true } as DateSelectArg);
+                setSelectedDate({ start: new Date(), end: new Date(), allDay: true });
                 onReminderFormOpen();
               }}
             >
@@ -124,7 +126,9 @@ export const Calendar: React.FC = () => {
         borderColor={borderColor}
         shadow="md"
         height="calc(100vh - 220px)"
-        minHeight="500px"      ><FullCalendar
+        minHeight="500px"
+      >
+        <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
           initialView={isMobile ? 'listWeek' : 'dayGridMonth'}
@@ -144,7 +148,6 @@ export const Calendar: React.FC = () => {
           }}
           dayMaxEventRows={3}
           events={[
-            // Regular events
             ...events.map(event => ({
               id: event.id,
               title: event.title,
@@ -156,9 +159,7 @@ export const Calendar: React.FC = () => {
               textColor: event.textColor || '#FFFFFF',
               extendedProps: { type: 'event', data: event }
             })),
-            // Class events
             ...classes.flatMap(cls => {
-              // Generate recurring events for each day of week
               if (!cls.daysOfWeek || cls.daysOfWeek.length === 0) {
                 return [];
               }
@@ -175,12 +176,10 @@ export const Calendar: React.FC = () => {
                 extendedProps: { type: 'class', data: cls }
               }));
             }),
-            // Reminder events
             ...reminders.map(reminder => {
               const reminderDate = new Date(reminder.date);
               let reminderDateTime = new Date(reminderDate);
               
-              // If time is specified, set it
               if (reminder.time) {
                 const [hours, minutes] = reminder.time.split(':').map(Number);
                 reminderDateTime.setHours(hours, minutes);
@@ -203,13 +202,14 @@ export const Calendar: React.FC = () => {
           editable={true}
           droppable={true}
           selectable={true}
-          dayMaxEvents={true}          weekends={true}
+          dayMaxEvents={true}
+          weekends={true}
           height="100%"
           aspectRatio={1.8}
           stickyHeaderDates={true}
           nowIndicator={true}
           businessHours={{
-            daysOfWeek: [1, 2, 3, 4, 5], // Monday - Friday
+            daysOfWeek: [1, 2, 3, 4, 5],
             startTime: '08:00',
             endTime: '18:00'
           }}

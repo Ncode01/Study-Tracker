@@ -2,9 +2,8 @@ import type { LoggedSession, CalendarEvent, Subject } from '../../types';
 import { useAppStore } from '../../store/appStore';
 import { useCalendarStore } from '../../store/calendarStore';
 
-// Mock function to get subject by ID (replace with actual implementation)
+// Function to get subject by ID
 async function getSubject(subjectId: string): Promise<Subject | undefined> {
-  // Get subjects from the store
   const { subjects } = useAppStore.getState();
   return subjects.find(s => s.id === subjectId);
 }
@@ -13,7 +12,6 @@ async function getSubject(subjectId: string): Promise<Subject | undefined> {
 async function addEventToCalendar(event: CalendarEvent): Promise<void> {
   const { addEvent } = useCalendarStore.getState();
   addEvent(event);
-  return;
 }
 
 /**
@@ -47,7 +45,6 @@ export async function handleStudySessionCompleted(
     
     // Add the event to the calendar
     await addEventToCalendar(sessionEvent);
-    return;
   } catch (error) {
     console.error('Error adding study session to calendar:', error);
     throw error;
@@ -58,14 +55,12 @@ export async function handleStudySessionCompleted(
  * Synchronizes calendar data with the server
  */
 export const syncCalendarData = async (): Promise<boolean> => {
-  // Implementation would go here - simplified without unused parameters
   return true;
 };
 
 // Google Calendar API integration functions
 export const authorizeGoogleCalendar = async (): Promise<boolean> => {
   try {
-    // Implementation for Google Calendar authorization
     return true;
   } catch (error) {
     console.error('Error authorizing Google Calendar:', error);
@@ -75,7 +70,6 @@ export const authorizeGoogleCalendar = async (): Promise<boolean> => {
 
 export const syncEventsWithGoogleCalendar = async (): Promise<boolean> => {
   try {
-    // Implementation for syncing with Google Calendar - simplified
     return true;
   } catch (error) {
     console.error('Error syncing with Google Calendar:', error);
@@ -85,7 +79,6 @@ export const syncEventsWithGoogleCalendar = async (): Promise<boolean> => {
 
 export const importGoogleCalendarEvents = async (): Promise<CalendarEvent[]> => {
   try {
-    // Implementation for importing events from Google Calendar
     return [];
   } catch (error) {
     console.error('Error importing from Google Calendar:', error);
@@ -98,7 +91,6 @@ export const importGoogleCalendarEvents = async (): Promise<CalendarEvent[]> => 
  */
 export async function getCalendarData() {
   try {
-    // Simplified implementation without unused variables
     return true;
   } catch (error) {
     console.error('Error fetching calendar data:', error);

@@ -1,4 +1,3 @@
-// src/components/timer/StudyTimer.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppStore } from '../../store/appStore';
 import {
