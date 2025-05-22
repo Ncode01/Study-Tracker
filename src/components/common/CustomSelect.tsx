@@ -1,6 +1,5 @@
-// src/components/common/CustomSelect.tsx
 import React from 'react';
-import type { ChangeEvent, FormEvent } from 'react';
+import type { ChangeEvent } from 'react';
 import { Box } from '@chakra-ui/react';
 
 interface CustomSelectProps {
@@ -22,37 +21,13 @@ export const CustomSelect = ({
   disabled,
   children
 }: CustomSelectProps) => {
-  // Create a wrapper function to handle the onChange event
-  const handleChange = (e: FormEvent<HTMLDivElement>) => {
-    // Cast the event target to HTMLSelectElement
-    const target = e.target as HTMLSelectElement;
-    // Create a new ChangeEvent with the correct type
-    const syntheticEvent = {
-      target,
-      currentTarget: target,
-      type: e.type,
-      bubbles: e.bubbles,
-      cancelable: e.cancelable,
-      defaultPrevented: e.defaultPrevented,
-      timeStamp: e.timeStamp,
-      nativeEvent: e.nativeEvent,
-      preventDefault: e.preventDefault,
-      stopPropagation: e.stopPropagation,
-      isPropagationStopped: () => false,
-      isDefaultPrevented: () => false,
-      persist: () => {}
-    } as ChangeEvent<HTMLSelectElement>;
-    
-    onChange(syntheticEvent);
-  };
-
   return (
     <Box position="relative" width="100%">
       <Box
         as="select"
         name={name}
         value={value}
-        onChange={handleChange as any}
+        onChange={onChange}
         required={required}
         disabled={disabled}
         width="100%"

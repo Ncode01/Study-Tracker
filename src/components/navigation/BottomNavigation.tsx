@@ -1,11 +1,7 @@
-// src/components/navigation/BottomNavigation.tsx
 import React from 'react';
 import {
   Box,
   Flex,
-  Icon,
-  Text,
-  VStack,
   useColorModeValue
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';

@@ -30,17 +30,6 @@ export const Calendar: React.FC = () => {
   const { isOpen: isClassFormOpen, onOpen: onClassFormOpen, onClose: onClassFormClose } = useDisclosure();
   const { isOpen: isReminderFormOpen, onOpen: onReminderFormOpen, onClose: onReminderFormClose } = useDisclosure();
   const { isOpen: isEventDetailsOpen, onOpen: onEventDetailsOpen, onClose: onEventDetailsClose } = useDisclosure();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  // Track window size for responsive layout
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [selectedDate, setSelectedDate] = useState<DateSelectArg | null>(null);
@@ -50,16 +39,17 @@ export const Calendar: React.FC = () => {
 
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
+
   const handleDateClick = (info: any) => {
-    // Fix type issue with the date
     setSelectedDate({ start: info.date, end: info.date, allDay: true } as DateSelectArg);
     onClassFormOpen();
   };
+
   const handleDateSelect = (selectInfo: DateSelectArg) => {
     setSelectedDate(selectInfo);
     onReminderFormOpen();
   };
-  
+
   const handleEventClick = (info: EventClickArg) => {
     const eventType = info.event.extendedProps?.type;
     const eventData = info.event.extendedProps?.data;
@@ -75,7 +65,9 @@ export const Calendar: React.FC = () => {
       });
       onEventDetailsOpen();
     }
-  };  return (
+  };
+
+  return (
     <Box p={0}>
       <Flex mb={4} justifyContent="space-between" alignItems="center">
         <Box>
@@ -124,16 +116,16 @@ export const Calendar: React.FC = () => {
         borderColor={borderColor}
         shadow="md"
         height="calc(100vh - 220px)"
-        minHeight="500px"      ><FullCalendar
+        minHeight="500px"
+      >
+        <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-          initialView={isMobile ? 'listWeek' : 'dayGridMonth'}
+          initialView="dayGridMonth"
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: isMobile 
-              ? 'listWeek,dayGridMonth' 
-              : 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
           }}
           buttonText={{
             today: 'Today',
@@ -144,7 +136,6 @@ export const Calendar: React.FC = () => {
           }}
           dayMaxEventRows={3}
           events={[
-            // Regular events
             ...events.map(event => ({
               id: event.id,
               title: event.title,
@@ -156,9 +147,7 @@ export const Calendar: React.FC = () => {
               textColor: event.textColor || '#FFFFFF',
               extendedProps: { type: 'event', data: event }
             })),
-            // Class events
             ...classes.flatMap(cls => {
-              // Generate recurring events for each day of week
               if (!cls.daysOfWeek || cls.daysOfWeek.length === 0) {
                 return [];
               }
@@ -175,12 +164,10 @@ export const Calendar: React.FC = () => {
                 extendedProps: { type: 'class', data: cls }
               }));
             }),
-            // Reminder events
             ...reminders.map(reminder => {
               const reminderDate = new Date(reminder.date);
               let reminderDateTime = new Date(reminderDate);
               
-              // If time is specified, set it
               if (reminder.time) {
                 const [hours, minutes] = reminder.time.split(':').map(Number);
                 reminderDateTime.setHours(hours, minutes);
@@ -203,13 +190,14 @@ export const Calendar: React.FC = () => {
           editable={true}
           droppable={true}
           selectable={true}
-          dayMaxEvents={true}          weekends={true}
+          dayMaxEvents={true}
+          weekends={true}
           height="100%"
           aspectRatio={1.8}
           stickyHeaderDates={true}
           nowIndicator={true}
           businessHours={{
-            daysOfWeek: [1, 2, 3, 4, 5], // Monday - Friday
+            daysOfWeek: [1, 2, 3, 4, 5],
             startTime: '08:00',
             endTime: '18:00'
           }}

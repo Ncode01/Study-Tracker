@@ -1,4 +1,3 @@
-// src/components/subjects/SubjectForm.tsx
 import React, { useState } from 'react';
 import { useAppStore } from '../../store/appStore';
 import {
@@ -11,6 +10,7 @@ import {
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import { FaPlus, FaTimes } from 'react-icons/fa';
+import { useFormHandler } from '../../hooks/useFormHandler';
 
 const MotionBox = motion(Box);
 
@@ -29,38 +29,25 @@ const SUBJECT_COLORS = [
 export const SubjectForm: React.FC = () => {
   const { addSubject } = useAppStore();
   const [isOpen, setIsOpen] = useState(false);
-  const [subjectData, setSubjectData] = useState({
-    name: '',
-    color: SUBJECT_COLORS[0],
-    targetHours: 0,
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setSubjectData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleColorSelect = (color: string) => {
-    setSubjectData(prev => ({ ...prev, color }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!subjectData.name.trim()) return;
-
-    addSubject({
-      name: subjectData.name,
-      color: subjectData.color,
-      targetHours: subjectData.targetHours > 0 ? subjectData.targetHours : undefined
-    });
-
-    // Reset form
-    setSubjectData({
+  const { formData, handleChange, handleSubmit, resetForm } = useFormHandler({
+    initialValues: {
       name: '',
       color: SUBJECT_COLORS[0],
-      targetHours: 0
-    });
-    setIsOpen(false);
+      targetHours: 0,
+    },
+    onSubmit: (data) => {
+      addSubject({
+        name: data.name,
+        color: data.color,
+        targetHours: data.targetHours > 0 ? data.targetHours : undefined
+      });
+      resetForm();
+      setIsOpen(false);
+    }
+  });
+
+  const handleColorSelect = (color: string) => {
+    handleChange({ target: { name: 'color', value: color } });
   };
 
   const formBackground = 'gray.700';
@@ -109,7 +96,7 @@ export const SubjectForm: React.FC = () => {
                 <Text mb={1} fontWeight="medium">Subject Name</Text>
                 <Input
                   name="name"
-                  value={subjectData.name}
+                  value={formData.name}
                   onChange={handleChange}
                   placeholder="E.g., Mathematics, Physics, Programming..."
                   required
@@ -128,7 +115,7 @@ export const SubjectForm: React.FC = () => {
                       h="30px"
                       borderRadius="md"
                       cursor="pointer"
-                      boxShadow={subjectData.color === color ? 'outline' : 'none'}
+                      boxShadow={formData.color === color ? 'outline' : 'none'}
                       _hover={{ transform: 'scale(1.1)' }}
                       transition="all 0.2s"
                     />
@@ -143,8 +130,8 @@ export const SubjectForm: React.FC = () => {
                   name="targetHours"
                   min={0}
                   max={100}
-                  value={subjectData.targetHours}
-                  onChange={(e) => setSubjectData(prev => ({ ...prev, targetHours: parseInt(e.target.value) || 0 }))}
+                  value={formData.targetHours}
+                  onChange={handleChange}
                 />
               </Box>
               
@@ -152,7 +139,7 @@ export const SubjectForm: React.FC = () => {
                 mt={2}
                 colorScheme={buttonColorScheme}
                 type="submit"
-                disabled={!subjectData.name.trim()}
+                disabled={!formData.name.trim()}
               >
                 Add Subject
               </Button>

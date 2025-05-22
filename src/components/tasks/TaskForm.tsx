@@ -1,4 +1,3 @@
-// src/components/tasks/TaskForm.tsx
 import React, { useState } from 'react';
 import { useAppStore } from '../../store/appStore';
 import {
@@ -20,6 +19,7 @@ import {
 import { motion } from 'framer-motion';
 import { FaPlus, FaTimes } from 'react-icons/fa';
 import { CustomSelect } from '../common/CustomSelect';
+import { useFormHandler } from '../../hooks/useFormHandler';
 
 const MotionBox = motion(Box);
 
@@ -31,11 +31,24 @@ interface TaskFormProps {
 export const TaskForm: React.FC<TaskFormProps> = ({ isOpen: isOpenProp = false, onClose }) => {
   const { addTask, subjects } = useAppStore();
   const [isLocalOpen, setIsLocalOpen] = useState(false);
-  const [taskData, setTaskData] = useState({
-    description: '',
-    subjectId: '',
-    priority: 'medium' as 'low' | 'medium' | 'high',
-    dueDate: ''
+
+  const { formData, handleChange, handleSubmit, resetForm } = useFormHandler({
+    initialValues: {
+      description: '',
+      subjectId: '',
+      priority: 'medium' as 'low' | 'medium' | 'high',
+      dueDate: ''
+    },
+    onSubmit: (data) => {
+      addTask({
+        description: data.description,
+        subjectId: data.subjectId,
+        priority: data.priority,
+        dueDate: data.dueDate ? new Date(data.dueDate) : undefined
+      });
+      resetForm();
+      handleToggle();
+    }
   });
 
   // Determine if we're using local state or props for controlling open state
@@ -48,34 +61,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen: isOpenProp = false, 
     } else {
       setIsLocalOpen(!isLocalOpen);
     }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setTaskData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!taskData.description.trim() || !taskData.subjectId) return;
-
-    addTask({
-      description: taskData.description,
-      subjectId: taskData.subjectId,
-      priority: taskData.priority,
-      dueDate: taskData.dueDate ? new Date(taskData.dueDate) : undefined
-    });
-
-    // Reset form
-    setTaskData({
-      description: '',
-      subjectId: '',
-      priority: 'medium',
-      dueDate: ''
-    });
-    
-    // Close form
-    handleToggle();
   };
 
   const formBackground = useColorModeValue('white', 'gray.700');
@@ -126,7 +111,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen: isOpenProp = false, 
                   <Text mb={1} fontWeight="medium">Description</Text>
                   <Input
                     name="description"
-                    value={taskData.description}
+                    value={formData.description}
                     onChange={handleChange}
                     placeholder="What needs to be done?"
                     required
@@ -137,7 +122,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen: isOpenProp = false, 
                   <Text mb={1} fontWeight="medium">Subject</Text>
                   <CustomSelect 
                     name="subjectId" 
-                    value={taskData.subjectId} 
+                    value={formData.subjectId} 
                     onChange={handleChange}
                     placeholder="Select a subject"
                     required
@@ -153,7 +138,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen: isOpenProp = false, 
                 <HStack>
                   <Box width="50%">
                     <Text mb={1} fontWeight="medium">Priority</Text>
-                    <CustomSelect name="priority" value={taskData.priority} onChange={handleChange}>
+                    <CustomSelect name="priority" value={formData.priority} onChange={handleChange}>
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
                       <option value="high">High</option>
@@ -165,7 +150,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen: isOpenProp = false, 
                     <Input
                       name="dueDate"
                       type="date"
-                      value={taskData.dueDate}
+                      value={formData.dueDate}
                       onChange={handleChange}
                     />
                   </Box>
@@ -175,7 +160,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen: isOpenProp = false, 
                   mt={2}
                   colorScheme={buttonColorScheme}
                   type="submit"
-                  disabled={!taskData.description.trim() || !taskData.subjectId}
+                  disabled={!formData.description.trim() || !formData.subjectId}
                 >
                   Add Task
                 </Button>
@@ -201,7 +186,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen: isOpenProp = false, 
                 <Text mb={1} fontWeight="medium">Description</Text>
                 <Input
                   name="description"
-                  value={taskData.description}
+                  value={formData.description}
                   onChange={handleChange}
                   placeholder="What needs to be done?"
                   required
@@ -212,7 +197,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen: isOpenProp = false, 
                 <Text mb={1} fontWeight="medium">Subject</Text>
                 <CustomSelect 
                   name="subjectId" 
-                  value={taskData.subjectId} 
+                  value={formData.subjectId} 
                   onChange={handleChange}
                   placeholder="Select a subject"
                   required
@@ -228,7 +213,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen: isOpenProp = false, 
               <HStack>
                 <Box width="50%">
                   <Text mb={1} fontWeight="medium">Priority</Text>
-                  <CustomSelect name="priority" value={taskData.priority} onChange={handleChange}>
+                  <CustomSelect name="priority" value={formData.priority} onChange={handleChange}>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
@@ -240,7 +225,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen: isOpenProp = false, 
                   <Input
                     name="dueDate"
                     type="date"
-                    value={taskData.dueDate}
+                    value={formData.dueDate}
                     onChange={handleChange}
                   />
                 </Box>
@@ -255,7 +240,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen: isOpenProp = false, 
             <Button 
               colorScheme={buttonColorScheme}
               type="submit"
-              disabled={!taskData.description.trim() || !taskData.subjectId}
+              disabled={!formData.description.trim() || !formData.subjectId}
             >
               Add Task
             </Button>
