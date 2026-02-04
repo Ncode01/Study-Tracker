@@ -1,0 +1,22 @@
+/**
+ * @fileoverview Layout component styles.
+ */
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f9fafb;
+}
+
+.main {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #f9fafb;
+}
+
+.content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}

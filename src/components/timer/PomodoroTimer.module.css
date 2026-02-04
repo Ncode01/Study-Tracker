@@ -1,0 +1,115 @@
+/**
+ * @fileoverview Pomodoro timer styles.
+ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-6);
+  padding: var(--spacing-6);
+}
+
+.presetSelector {
+  width: 200px;
+}
+
+.timerWrapper {
+  position: relative;
+  width: 280px;
+  height: 280px;
+}
+
+.progressRing {
+  width: 100%;
+  height: 100%;
+}
+
+.progressBackground {
+  stroke: var(--color-gray-200);
+}
+
+.progressBar {
+  transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+}
+
+.timerContent {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.modeLabel {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-1);
+}
+
+.time {
+  font-size: 4rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-900);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.sessions {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-500);
+  margin-top: var(--spacing-2);
+}
+
+.subjectSelector {
+  width: 200px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.stats {
+  display: flex;
+  gap: var(--spacing-8);
+  margin-top: var(--spacing-4);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.statValue {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-900);
+}
+
+.statLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-500);
+}
+
+@media (max-width: 480px) {
+  .timerWrapper {
+    width: 240px;
+    height: 240px;
+  }
+
+  .time {
+    font-size: 3rem;
+  }
+
+  .controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

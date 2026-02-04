@@ -1,0 +1,50 @@
+/**
+ * @fileoverview Subject badge styles.
+ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-medium);
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.badge.sm {
+  font-size: var(--font-size-xs);
+  padding: 2px var(--spacing-2);
+}
+
+.badge.md {
+  font-size: var(--font-size-sm);
+}
+
+.badge.lg {
+  font-size: var(--font-size-base);
+  padding: var(--spacing-2) var(--spacing-3);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot.sm {
+  width: 6px;
+  height: 6px;
+}
+
+.dot.md {
+  width: 8px;
+  height: 8px;
+}
+
+.dot.lg {
+  width: 10px;
+  height: 10px;
+}

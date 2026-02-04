@@ -1,0 +1,74 @@
+/**
+ * @fileoverview Subject stats card styles.
+ */
+
+.card {
+  min-width: 180px;
+}
+
+.card.weak {
+  border-color: var(--color-error);
+  border-left-width: 3px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-3);
+}
+
+.trendUp {
+  color: var(--color-success);
+}
+
+.trendDown {
+  color: var(--color-error);
+}
+
+.trendStable {
+  color: var(--color-gray-400);
+}
+
+.score {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-3);
+}
+
+.percentage {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
+.weakBadge {
+  font-size: var(--font-size-xs);
+  padding: 2px var(--spacing-2);
+  background-color: var(--color-error-light);
+  color: var(--color-error);
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-medium);
+}
+
+.stats {
+  display: flex;
+  gap: var(--spacing-4);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.statValue {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-900);
+}
+
+.statLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
+}

@@ -1,0 +1,109 @@
+/**
+ * @fileoverview Header component styles.
+ */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 24px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #4F46E5;
+}
+
+.logoText {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  color: #4b5563;
+  font-weight: 500;
+  transition: all 150ms ease;
+}
+
+.navItem:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.navItem.active {
+  background-color: #eef2ff;
+  color: #4F46E5;
+}
+
+.navIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navLabel {
+  font-size: 14px;
+}
+
+.examCountdown {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 8px 12px;
+  background-color: #fef3c7;
+  border-radius: 8px;
+}
+
+.examLabel {
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.examDate {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f59e0b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    padding: 0 var(--spacing-4);
+  }
+
+  .logoText {
+    display: none;
+  }
+
+  .navLabel {
+    display: none;
+  }
+
+  .navItem {
+    padding: var(--spacing-2);
+  }
+
+  .examCountdown {
+    display: none;
+  }
+}
