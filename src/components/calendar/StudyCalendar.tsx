@@ -5,7 +5,7 @@
 import React, { useMemo, useCallback, useState } from 'react';
 import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
 import type { SlotInfo, View } from 'react-big-calendar';
-import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
+import withDragAndDropModule from 'react-big-calendar/lib/addons/dragAndDrop';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import type { CalendarEvent } from '../../types';
@@ -29,6 +29,13 @@ const localizer = dateFnsLocalizer({
 /**
  * Create drag-and-drop calendar
  */
+const withDragAndDrop =
+  (
+    withDragAndDropModule as typeof withDragAndDropModule & {
+      default?: typeof withDragAndDropModule;
+    }
+  ).default ?? withDragAndDropModule;
+
 const DnDCalendar = withDragAndDrop<CalendarEvent, object>(Calendar);
 
 /**
