@@ -1,216 +1,212 @@
 ﻿import { useMemo } from "react";
-import { Card, SubjectBadge, EmptyState } from "../components";
+import { useGamification } from "../hooks/useGamification";
 import { useTasks, useSessions, useMarks } from "../hooks";
-import { formatDate, formatDuration, getDaysUntilExam, isToday, isTomorrow } from "../utils";
-import { EXAM_SCHEDULE, SUBJECTS } from "../types";
-import type { SubjectStats } from "../types";
-import styles from "./DashboardPage.module.css";
+import {
+  formatDate,
+  formatDuration,
+  getDaysUntilExam
+} from "../utils";
+import { EXAM_SCHEDULE } from "../types";
+import { StatCard, DailyQuests } from "../components/dashboard";
+import {
+  BookOpen,
+  CheckCircle,
+  Clock,
+  GraduationCap,
+  Brain,
+  Calendar as CalendarIcon
+} from "lucide-react";
+import { motion } from "framer-motion";
+// If SubjectBadge uses module css, it might look off, but we can fix later.
 
-function DashboardPage(): React.ReactElement {
-  const { tasks, toggleTask } = useTasks();
+export default function DashboardPage() {
+  const { tasks } = useTasks();
   const { sessions } = useSessions();
-  const { getSubjectStats, overallAverage } = useMarks();
+  const { overallAverage } = useMarks();
+  const { level, xp } = useGamification();
 
-  const upcomingTasks = useMemo(() => {
-    return tasks
-      .filter((task) => !task.completed)
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-      .slice(0, 5);
-  }, [tasks]);
+  // Metrics Logic
+  const stats = useMemo(() => {
+    const completedTasks = tasks.filter((t) => t.completed).length;
 
-  const recentSessions = useMemo(() => {
-    return [...sessions]
-      .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime())
-      .slice(0, 5);
-  }, [sessions]);
-
-  const nextExam = useMemo(() => {
-    const today = new Date();
-    return EXAM_SCHEDULE
-      .filter((exam) => new Date(exam.date) >= today)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-  }, []);
-
-  const totalStudyMinutes = useMemo(() => {
-    return sessions.reduce((total, session) => {
+    // Calculate total study time
+    const totalStudyMinutes = sessions.reduce((total, session) => {
       const start = new Date(session.start).getTime();
       const end = new Date(session.end).getTime();
       return total + Math.round((end - start) / (1000 * 60));
     }, 0);
-  }, [sessions]);
 
-  const todayStudyMinutes = useMemo(() => {
+    // Calculate today's study time
     const today = new Date().toISOString().split("T")[0];
-    return sessions
+    const todayStudyMinutes = sessions
       .filter((s) => s.start.startsWith(today))
       .reduce((total, session) => {
         const start = new Date(session.start).getTime();
         const end = new Date(session.end).getTime();
         return total + Math.round((end - start) / (1000 * 60));
       }, 0);
-  }, [sessions]);
 
-  const stats = useMemo(() => {
-    const completedTasks = tasks.filter((t) => t.completed).length;
-    const totalTasks = tasks.length;
-    const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
     return {
       completedTasks,
-      totalTasks,
-      completionRate,
-      avgMark: overallAverage,
-      totalStudyTime: totalStudyMinutes,
-      todayStudyTime: todayStudyMinutes,
+      totalStudyMinutes,
+      todayStudyMinutes,
+      avgMark: overallAverage
     };
-  }, [tasks, overallAverage, totalStudyMinutes, todayStudyMinutes]);
+  }, [tasks, sessions, overallAverage]);
 
-  const subjectProgress = useMemo(() => {
-    const allStats = getSubjectStats();
-    return allStats.filter((s: SubjectStats) => s.totalTests > 0);
-  }, [getSubjectStats]);
+  const upcomingExams = useMemo(() => {
+    const today = new Date();
+    return EXAM_SCHEDULE
+      .filter((exam) => new Date(exam.date) >= today)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 3);
+  }, []);
 
-  const formatTaskDue = (dateStr: string): string => {
-    if (isToday(dateStr)) return "Today";
-    if (isTomorrow(dateStr)) return "Tomorrow";
-    return formatDate(dateStr);
-  };
-
-  const getSessionDuration = (start: string, end: string): number => {
-    return Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000);
-  };
+  const nextExam = upcomingExams[0];
+  const daysToExam = nextExam ? getDaysUntilExam(nextExam.date) : 0;
 
   return (
-    <div className={styles.dashboard}>
-      <header className={styles.header}>
-        <div className={styles.greeting}>
-          <h1>Welcome to Study Planner</h1>
-          <p>Track your G.C.E. O/L preparation progress</p>
+    <div className="space-y-6 pb-10">
+      {/* Hero Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row gap-6 items-center justify-between bg-gradient-to-r from-violet-900/50 to-indigo-900/50 border border-primary/20 rounded-2xl p-8 shadow-lg"
+      >
+        <div>
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
+            Welcome back, Scholar!
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            You are currently <span className="text-accent font-bold">Level {level}</span> with <span className="text-primary font-bold">{xp} XP</span>.
+            Keep pushing!
+          </p>
         </div>
+
         {nextExam && (
-          <Card className={styles.examCountdown}>
-            <div className={styles.countdownContent}>
-              <span className={styles.countdownLabel}>Days until exams</span>
-              <span className={styles.countdownNumber}>{getDaysUntilExam()}</span>
-              <span className={styles.nextExam}>
-                Next: {nextExam.subject} ({formatDate(nextExam.date)})
-              </span>
+          <div className="flex items-center gap-4 bg-background/50 backdrop-blur-md px-6 py-4 rounded-xl border border-white/10">
+            <div className="text-center">
+              <span className="block text-4xl font-bold text-primary">{daysToExam}</span>
+              <span className="text-xs text-muted-foreground uppercase tracking-wider">Days Left</span>
             </div>
-          </Card>
+            <div className="h-10 w-px bg-white/10" />
+            <div>
+              <p className="font-medium text-sm text-muted-foreground">Next Exam</p>
+              <p className="font-bold text-lg">{nextExam.subject}</p>
+            </div>
+          </div>
         )}
-      </header>
+      </motion.div>
 
-      <section className={styles.statsGrid}>
-        <Card className={styles.statCard}>
-          <div className={styles.statContent}>
-            <span className={styles.statValue}>{stats.completedTasks}/{stats.totalTasks}</span>
-            <span className={styles.statLabel}>Tasks Completed</span>
-          </div>
-        </Card>
-        <Card className={styles.statCard}>
-          <div className={styles.statContent}>
-            <span className={styles.statValue}>{formatDuration(stats.todayStudyTime)}</span>
-            <span className={styles.statLabel}>Today Study Time</span>
-          </div>
-        </Card>
-        <Card className={styles.statCard}>
-          <div className={styles.statContent}>
-            <span className={styles.statValue}>{stats.avgMark}%</span>
-            <span className={styles.statLabel}>Average Mark</span>
-          </div>
-        </Card>
-        <Card className={styles.statCard}>
-          <div className={styles.statContent}>
-            <span className={styles.statValue}>{formatDuration(stats.totalStudyTime)}</span>
-            <span className={styles.statLabel}>Total Study Time</span>
-          </div>
-        </Card>
-      </section>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Tasks Finished"
+          value={stats.completedTasks}
+          icon={CheckCircle}
+          color="secondary"
+          delay={0.1}
+        />
+        <StatCard
+          label="Study Time (Total)"
+          value={formatDuration(stats.totalStudyMinutes)}
+          icon={Clock}
+          color="primary"
+          delay={0.2}
+        />
+        <StatCard
+          label="Study Time (Today)"
+          value={formatDuration(stats.todayStudyMinutes)}
+          icon={BookOpen}
+          color="accent"
+          delay={0.3}
+        />
+        <StatCard
+          label="Average Mark"
+          value={`${stats.avgMark}% `}
+          icon={GraduationCap}
+          color="pink"
+          delay={0.4}
+        />
+      </div>
 
-      <div className={styles.contentGrid}>
-        <Card className={styles.upcomingTasks}>
-          <h2 className={styles.sectionTitle}>Upcoming Tasks</h2>
-          {upcomingTasks.length > 0 ? (
-            <ul className={styles.taskList}>
-              {upcomingTasks.map((task) => (
-                <li key={task.id} className={styles.taskItem}>
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    onChange={() => toggleTask(task.id)}
-                  />
-                  <div className={styles.taskContent}>
-                    <span className={styles.taskTitle}>{task.title}</span>
-                    <div className={styles.taskMeta}>
-                      <SubjectBadge subject={task.subject} size="sm" />
-                      <span className={styles.taskDue}>{formatTaskDue(task.dueDate)}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content Area */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Upcoming Exams List */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-card border border-border rounded-xl p-6"
+          >
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <CalendarIcon className="text-primary" size={20} />
+              Exam Schedule
+            </h2>
+            <div className="space-y-4">
+              {upcomingExams.map((exam) => (
+                <div key={exam.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border/50">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                      {new Date(exam.date).getDate()}
+                    </div>
+                    <div>
+                      <p className="font-bold">{exam.subject}</p>
+                      <p className="text-sm text-muted-foreground">G.C.E O/L Examination</p>
                     </div>
                   </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyState icon="clipboard" title="No upcoming tasks" description="Add tasks to get started!" />
-          )}
-        </Card>
-
-        <Card className={styles.recentSessions}>
-          <h2 className={styles.sectionTitle}>Recent Study Sessions</h2>
-          {recentSessions.length > 0 ? (
-            <ul className={styles.sessionList}>
-              {recentSessions.map((session) => (
-                <li key={session.id} className={styles.sessionItem}>
-                  <SubjectBadge subject={session.subject} size="sm" />
-                  <span className={styles.sessionTopic}>{session.title}</span>
-                  <span className={styles.sessionDuration}>
-                    {formatDuration(getSessionDuration(session.start, session.end))}
-                  </span>
-                  <span className={styles.sessionDate}>{formatDate(session.start)}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyState icon="clock" title="No sessions yet" description="Start studying!" />
-          )}
-        </Card>
-
-        <Card className={styles.subjectProgress}>
-          <h2 className={styles.sectionTitle}>Subject Progress</h2>
-          {subjectProgress.length > 0 ? (
-            <div className={styles.subjectGrid}>
-              {subjectProgress.map((stat: SubjectStats) => (
-                <div key={stat.subject} className={styles.subjectCard}>
-                  <SubjectBadge subject={stat.subject} size="sm" />
-                  <div className={styles.subjectStats}>
-                    <span className={styles.subjectAvg}>{stat.averageScore}%</span>
-                    <span className={styles.subjectTests}>{stat.totalTests} tests</span>
+                  <div className="text-right">
+                    <span className="text-sm font-medium text-accent">
+                      {getDaysUntilExam(exam.date)} days away
+                    </span>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(exam.date)}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
-          ) : (
-            <EmptyState icon="chart" title="No marks yet" description="Add marks!" />
-          )}
-        </Card>
+          </motion.div>
 
-        <Card className={styles.examSchedule}>
-          <h2 className={styles.sectionTitle}>Exam Schedule</h2>
-          <ul className={styles.examList}>
-            {EXAM_SCHEDULE.slice(0, 6).map((exam) => (
-              <li key={exam.subject} className={styles.examItem}>
-                <SubjectBadge subject={exam.subject} size="sm" />
-                <span className={styles.examDate}>{formatDate(exam.date)}</span>
-                <span className={styles.examDays}>{getDaysUntilExam(exam.date)} days</span>
-              </li>
-            ))}
-          </ul>
-        </Card>
+          {/* Suggestion/Motivation */}
+          <div className="bg-gradient-to-r from-emerald-900/20 to-teal-900/20 border border-emerald-500/20 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <Brain className="text-emerald-500 shrink-0" size={24} />
+              <div>
+                <h3 className="font-bold text-emerald-100">Study Tip</h3>
+                <p className="text-emerald-200/80 text-sm mt-1">
+                  Consistent revision is key! Try to break your study sessions into 25-minute chunks using the Pomodoro timer for maximum retention.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar / Secondary Area */}
+        <div className="space-y-6">
+          <DailyQuests />
+
+          {/* Mini Task List */}
+          <div className="bg-card border border-border rounded-xl p-6">
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <CheckCircle className="text-muted-foreground" size={20} />
+              Priorities
+            </h3>
+            <ul className="space-y-3">
+              {tasks.filter(t => !t.completed).slice(0, 3).map(task => (
+                <li key={task.id} className="text-sm flex gap-2 items-start opacity-80 hover:opacity-100 transition-opacity">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                  <span className="line-clamp-2">{task.title}</span>
+                </li>
+              ))}
+              {tasks.filter(t => !t.completed).length === 0 && (
+                <p className="text-sm text-muted-foreground italic">No pending tasks. Great job!</p>
+              )}
+            </ul>
+          </div>
+        </div>
       </div>
-
-      <footer className={styles.footer}>
-        <p className={styles.motivational}>{SUBJECTS.length} subjects to master!</p>
-      </footer>
     </div>
   );
 }
-
-export default DashboardPage;

@@ -1,68 +1,38 @@
-/**
- * @fileoverview Pomodoro timer display component.
- */
 
-import React from 'react';
 import type { PomodoroMode, Subject } from '../../types';
 import { SUBJECTS, SUBJECT_COLORS } from '../../types';
-import { Button, Select } from '../common';
-import styles from './PomodoroTimer.module.css';
+import { motion } from 'framer-motion';
+import { Play, Pause, RotateCcw, SkipForward, Clock, BookOpen } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
-/**
- * Pomodoro timer props
- */
 export interface PomodoroTimerProps {
-  /** Formatted time string (MM:SS) */
   formattedTime: string;
-  /** Progress percentage (0-100) */
   progress: number;
-  /** Current mode */
   mode: PomodoroMode;
-  /** Is timer running */
   isRunning: boolean;
-  /** Session count */
   sessionCount: number;
-  /** Selected subject */
   subject?: Subject;
-  /** Current preset */
   preset: '25/5' | '50/10';
-  /** Start handler */
   onStart: () => void;
-  /** Pause handler */
   onPause: () => void;
-  /** Reset handler */
   onReset: () => void;
-  /** Skip handler */
   onSkip: () => void;
-  /** Subject change handler */
   onSubjectChange: (subject: Subject | undefined) => void;
-  /** Preset change handler */
   onPresetChange: (preset: '25/5' | '50/10') => void;
 }
 
-/**
- * Mode display labels
- */
+const MODE_COLORS: Record<PomodoroMode, string> = {
+  focus: '#8b5cf6', // Primary (Violet)
+  shortBreak: '#10b981', // Emerald
+  longBreak: '#f59e0b', // Amber
+};
+
 const MODE_LABELS: Record<PomodoroMode, string> = {
   focus: 'Focus Time',
   shortBreak: 'Short Break',
   longBreak: 'Long Break',
 };
 
-/**
- * Mode colors
- */
-const MODE_COLORS: Record<PomodoroMode, string> = {
-  focus: 'var(--color-primary)',
-  shortBreak: 'var(--color-success)',
-  longBreak: 'var(--color-info)',
-};
-
-/**
- * Pomodoro timer display component
- * @param props - Timer props
- * @returns Timer element
- */
 export function PomodoroTimer({
   formattedTime,
   progress,
@@ -77,125 +47,151 @@ export function PomodoroTimer({
   onSkip,
   onSubjectChange,
   onPresetChange,
-}: PomodoroTimerProps): React.ReactElement {
+}: PomodoroTimerProps) {
   const modeColor = subject ? SUBJECT_COLORS[subject] : MODE_COLORS[mode];
 
-  const subjectOptions = [
-    { value: '', label: 'No subject' },
-    ...SUBJECTS.map((s) => ({ value: s, label: s })),
-  ];
-
-  const presetOptions = [
-    { value: '25/5', label: '25/5 (Classic)' },
-    { value: '50/10', label: '50/10 (Extended)' },
-  ];
-
-  // Calculate circle properties
+  // Circle config
   const radius = 120;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   return (
-    <div className={styles.container}>
-      <div className={styles.presetSelector}>
-        <Select
-          options={presetOptions}
-          value={preset}
-          onChange={(val) => onPresetChange(val as '25/5' | '50/10')}
-        />
+    <div className="flex flex-col items-center w-full max-w-md mx-auto p-6 bg-card border border-border rounded-2xl shadow-xl relative overflow-hidden">
+      {/* Background glow */}
+      <div
+        className="absolute top-0 left-0 w-full h-full opacity-10 blur-3xl pointer-events-none transition-colors duration-1000"
+        style={{ backgroundColor: modeColor }}
+      />
+
+      {/* Preset Toggle */}
+      <div className="flex bg-muted p-1 rounded-lg mb-8 relative z-10">
+        {(['25/5', '50/10'] as const).map((p) => (
+          <button
+            key={p}
+            onClick={() => onPresetChange(p)}
+            className={cn(
+              "px-4 py-1.5 rounded-md text-sm font-medium transition-all",
+              preset === p ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {p === '25/5' ? 'Classic' : 'Long'}
+          </button>
+        ))}
       </div>
 
-      <div className={styles.timerWrapper}>
-        <svg className={styles.progressRing} viewBox="0 0 280 280">
+      {/* Timer Circle */}
+      <div className="relative mb-8 z-10">
+        <svg width="280" height="280" className="transform -rotate-90">
+          {/* Background Circle */}
           <circle
-            className={styles.progressBackground}
             cx="140"
             cy="140"
             r={radius}
             fill="none"
+            stroke="currentColor"
             strokeWidth="8"
+            className="text-muted/30"
           />
-          <circle
-            className={styles.progressBar}
+          {/* Progress Circle */}
+          <motion.circle
             cx="140"
             cy="140"
             r={radius}
             fill="none"
             strokeWidth="8"
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
-            style={{ stroke: modeColor }}
-            transform="rotate(-90 140 140)"
+            stroke={modeColor}
+            strokeDasharray={circumference}
+            animate={{ strokeDashoffset }}
+            transition={{ duration: 1, ease: "linear" }}
+            className="drop-shadow-[0_0_10px_rgba(0,0,0,0.2)] transition-colors duration-500"
           />
         </svg>
-        <div className={styles.timerContent}>
-          <span className={styles.modeLabel} style={{ color: modeColor }}>
+
+        {/* Center Content */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+          <motion.div
+            key={mode}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-sm uppercase tracking-widest font-bold mb-2 transition-colors duration-500"
+            style={{ color: modeColor }}
+          >
             {MODE_LABELS[mode]}
-          </span>
-          <span className={styles.time}>{formattedTime}</span>
-          <span className={styles.sessions}>
-            Session {sessionCount + (mode === 'focus' ? 1 : 0)}
-          </span>
+          </motion.div>
+
+          <div className="text-6xl font-black font-mono tracking-tighter tabular-nums mb-2">
+            {formattedTime}
+          </div>
+
+          <div className="flex items-center gap-1.5 text-muted-foreground text-sm font-medium bg-muted/50 px-3 py-1 rounded-full">
+            <Clock size={14} />
+            <span>Session {sessionCount + (mode === 'focus' ? 1 : 0)}</span>
+          </div>
         </div>
       </div>
 
-      <div className={styles.subjectSelector}>
-        <Select
-          label="Studying"
-          options={subjectOptions}
-          value={subject || ''}
-          onChange={(val) => onSubjectChange(val as Subject || undefined)}
-        />
-      </div>
-
-      <div className={styles.controls}>
+      {/* Controls */}
+      <div className="flex items-center gap-4 mb-8 z-10">
         {!isRunning ? (
-          <Button onClick={onStart} size="lg">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 3 19 12 5 21 5 3" />
-            </svg>
-            Start
-          </Button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onStart}
+            className="h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/25 hover:bg-primary/90 transition-colors"
+          >
+            <Play size={32} className="ml-1" fill="currentColor" />
+          </motion.button>
         ) : (
-          <Button onClick={onPause} size="lg" variant="secondary">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="6" y="4" width="4" height="16" />
-              <rect x="14" y="4" width="4" height="16" />
-            </svg>
-            Pause
-          </Button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onPause}
+            className="h-16 w-16 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center shadow-lg shadow-secondary/25 hover:bg-secondary/90 transition-colors"
+          >
+            <Pause size={32} fill="currentColor" />
+          </motion.button>
         )}
-        <Button onClick={onReset} variant="outline" size="lg">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-            <path d="M3 3v5h5" />
-          </svg>
-          Reset
-        </Button>
-        <Button onClick={onSkip} variant="ghost" size="lg">
-          Skip
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="5 4 15 12 5 20 5 4" />
-            <line x1="19" y1="5" x2="19" y2="19" />
-          </svg>
-        </Button>
+
+        <button
+          onClick={onReset}
+          className="h-12 w-12 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground flex items-center justify-center transition-colors"
+          title="Reset Timer"
+        >
+          <RotateCcw size={20} />
+        </button>
+
+        <button
+          onClick={onSkip}
+          className="h-12 w-12 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground flex items-center justify-center transition-colors"
+          title="Skip Phase"
+        >
+          <SkipForward size={20} />
+        </button>
       </div>
 
-      <div className={styles.stats}>
-        <div className={styles.stat}>
-          <span className={styles.statValue}>{sessionCount}</span>
-          <span className={styles.statLabel}>Sessions completed</span>
-        </div>
-        <div className={styles.stat}>
-          <span className={styles.statValue}>
-            {Math.round((sessionCount * (preset === '25/5' ? 25 : 50)) / 60 * 10) / 10}h
-          </span>
-          <span className={styles.statLabel}>Focus time today</span>
+      {/* Subject Selector */}
+      <div className="w-full relative z-10">
+        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block text-center">
+          Focusing On
+        </label>
+        <div className="relative">
+          <select
+            value={subject || ''}
+            onChange={(e) => onSubjectChange(e.target.value as Subject || undefined)}
+            className="w-full appearance-none bg-muted hover:bg-muted/80 transition-colors px-4 py-3 rounded-xl text-center font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+          >
+            <option value="">General Study</option>
+            {SUBJECTS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+            <BookOpen size={16} />
+          </div>
         </div>
       </div>
+
     </div>
   );
 }
-
-export default PomodoroTimer;

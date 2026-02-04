@@ -8,3 +8,4 @@ export * from './tasks';
 export * from './calendar';
 export * from './timer';
 export * from './charts';
+export * from './gamification';

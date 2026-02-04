@@ -1,21 +1,11 @@
-/**
- * @fileoverview Task form component for add/edit.
- */
-
 import React, { useState } from 'react';
 import type { Task, Subject, RecurrenceType, Priority } from '../../types';
 import { SUBJECTS } from '../../types';
-import { Button, Input, Select } from '../common';
 import { validateTask, formatDateForInput } from '../../utils';
-import styles from './TaskForm.module.css';
 
-/**
- * Task form props
- */
+
 export interface TaskFormProps {
-  /** Task to edit (null for new) */
   task?: Task | null;
-  /** Submit handler */
   onSubmit: (data: {
     title: string;
     subject: Subject;
@@ -23,15 +13,9 @@ export interface TaskFormProps {
     recurrence: RecurrenceType;
     priority: Priority;
   }) => void;
-  /** Cancel handler */
   onCancel: () => void;
 }
 
-/**
- * Task form component
- * @param props - Form props
- * @returns Form element
- */
 export function TaskForm({
   task,
   onSubmit,
@@ -46,12 +30,8 @@ export function TaskForm({
   const [priority, setPriority] = useState<Priority>(task?.priority || 'medium');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  /**
-   * Handle form submission
-   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     const validation = validateTask({
       title,
       subject,
@@ -75,73 +55,86 @@ export function TaskForm({
     });
   };
 
-  const subjectOptions = SUBJECTS.map((s) => ({ value: s, label: s }));
-  const recurrenceOptions = [
-    { value: 'none', label: 'No Repeat' },
-    { value: 'daily', label: 'Daily' },
-    { value: 'weekly', label: 'Weekly' },
-  ];
-  const priorityOptions = [
-    { value: 'low', label: 'Low' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'high', label: 'High' },
-  ];
-
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
-      <Input
-        label="Task Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Enter task title..."
-        error={errors.title}
-        fullWidth
-        autoFocus
-      />
-
-      <Select
-        label="Subject"
-        options={subjectOptions}
-        value={subject}
-        onChange={(val) => setSubject(val as Subject)}
-        error={errors.subject}
-        fullWidth
-      />
-
-      <Input
-        label="Due Date"
-        type="date"
-        value={dueDate}
-        onChange={(e) => setDueDate(e.target.value)}
-        error={errors.dueDate}
-        fullWidth
-      />
-
-      <div className={styles.row}>
-        <Select
-          label="Repeat"
-          options={recurrenceOptions}
-          value={recurrence}
-          onChange={(val) => setRecurrence(val as RecurrenceType)}
-          fullWidth
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Task Title</label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          placeholder="What do you need to study?"
+          autoFocus
         />
-
-        <Select
-          label="Priority"
-          options={priorityOptions}
-          value={priority}
-          onChange={(val) => setPriority(val as Priority)}
-          fullWidth
-        />
+        {errors.title && <p className="text-xs text-red-500">{errors.title}</p>}
       </div>
 
-      <div className={styles.actions}>
-        <Button type="button" variant="ghost" onClick={onCancel}>
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Subject</label>
+        <select
+          value={subject}
+          onChange={(e) => setSubject(e.target.value as Subject)}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {SUBJECTS.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Due Date</label>
+        <input
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+        {errors.dueDate && <p className="text-xs text-red-500">{errors.dueDate}</p>}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Recurrence</label>
+          <select
+            value={recurrence}
+            onChange={(e) => setRecurrence(e.target.value as RecurrenceType)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="none">No Repeat</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Priority</label>
+          <select
+            value={priority}
+            onChange={(e) => setPriority(e.target.value as Priority)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-3 pt-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+        >
           Cancel
-        </Button>
-        <Button type="submit">
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors shadow-lg shadow-primary/20"
+        >
           {task ? 'Update Task' : 'Add Task'}
-        </Button>
+        </button>
       </div>
     </form>
   );

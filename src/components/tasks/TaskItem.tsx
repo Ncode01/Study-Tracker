@@ -1,108 +1,108 @@
-/**
- * @fileoverview Task item component.
- */
-
-import React from 'react';
 import type { Task } from '../../types';
-import { SubjectBadge } from '../common';
+import { SUBJECT_COLORS } from '../../types';
 import { formatDate } from '../../utils';
-import styles from './TaskItem.module.css';
+import { motion } from 'framer-motion';
+import { Check, Edit, Trash2, Calendar, Repeat } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
-/**
- * Task item props
- */
 export interface TaskItemProps {
-  /** Task data */
   task: Task;
-  /** Toggle completion handler */
   onToggle: (taskId: string) => void;
-  /** Edit handler */
   onEdit: (task: Task) => void;
-  /** Delete handler */
   onDelete: (taskId: string) => void;
 }
 
-/**
- * Individual task item component
- * @param props - Task item props
- * @returns Task item element
- */
 export function TaskItem({
   task,
   onToggle,
   onEdit,
   onDelete,
 }: TaskItemProps): React.ReactElement {
-  const isOverdue = !task.completed && new Date(task.dueDate) < new Date();
+  const isOverdue = new Date(task.dueDate) < new Date() && !task.completed;
+
+  const priorityColors = {
+    high: "bg-red-500/10 text-red-500 border-red-500/20",
+    medium: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+    low: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  };
 
   return (
-    <div className={`${styles.item} ${task.completed ? styles.completed : ''} ${isOverdue ? styles.overdue : ''}`}>
-      <div className={styles.checkbox}>
-        <input
-          type="checkbox"
-          checked={task.completed}
-          onChange={() => onToggle(task.id)}
-          id={`task-${task.id}`}
-          aria-label={`Mark "${task.title}" as ${task.completed ? 'incomplete' : 'complete'}`}
-        />
-        <label htmlFor={`task-${task.id}`} className={styles.checkmark}>
-          {task.completed && (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          )}
-        </label>
-      </div>
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      className={cn(
+        "group relative flex items-center gap-4 p-4 rounded-xl border transition-all duration-200",
+        task.completed ? "bg-muted/30 border-border" : "bg-card border-border hover:border-primary/50 hover:shadow-md"
+      )}
+    >
+      {/* Checkbox */}
+      <button
+        onClick={() => onToggle(task.id)}
+        className={cn(
+          "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300",
+          task.completed
+            ? "bg-primary border-primary text-primary-foreground"
+            : "border-muted-foreground hover:border-primary"
+        )}
+      >
+        {task.completed && <Check size={14} strokeWidth={3} />}
+      </button>
 
-      <div className={styles.content}>
-        <div className={styles.titleRow}>
-          <span className={styles.title}>{task.title}</span>
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span
+            className={cn(
+              "font-medium truncate transition-all",
+              task.completed && "line-through text-muted-foreground"
+            )}
+          >
+            {task.title}
+          </span>
+          <span
+            className="w-2 h-2 rounded-full shrink-0"
+            style={{ backgroundColor: SUBJECT_COLORS[task.subject] }}
+            title={task.subject}
+          />
+        </div>
+
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className={cn("flex items-center gap-1", isOverdue && "text-red-500 font-bold")}>
+            <Calendar size={12} />
+            {formatDate(task.dueDate)}
+          </span>
+
           {task.recurrence !== 'none' && (
-            <span className={styles.recurrence} title={`Repeats ${task.recurrence}`}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="23 4 23 10 17 10" />
-                <polyline points="1 20 1 14 7 14" />
-                <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-              </svg>
+            <span className="flex items-center gap-1 text-primary">
+              <Repeat size={12} />
+              {task.recurrence}
             </span>
           )}
-        </div>
-        <div className={styles.meta}>
-          <SubjectBadge subject={task.subject} size="sm" />
-          <span className={styles.dueDate}>
-            {isOverdue ? 'Overdue: ' : 'Due: '}
-            {formatDate(task.dueDate, 'MMM d')}
-          </span>
-          <span className={`${styles.priority} ${styles[task.priority]}`}>
+
+          <span className={cn("px-1.5 py-0.5 rounded text-[10px] border uppercase tracking-wider", priorityColors[task.priority])}>
             {task.priority}
           </span>
         </div>
       </div>
 
-      <div className={styles.actions}>
+      {/* Actions */}
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
-          className={styles.actionButton}
           onClick={() => onEdit(task)}
-          aria-label="Edit task"
+          className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-            <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-          </svg>
+          <Edit size={16} />
         </button>
         <button
-          className={`${styles.actionButton} ${styles.deleteButton}`}
           onClick={() => onDelete(task.id)}
-          aria-label="Delete task"
+          className="p-2 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 6h18" />
-            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-          </svg>
+          <Trash2 size={16} />
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
