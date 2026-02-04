@@ -304,7 +304,7 @@ export interface SubjectStats {
 /**
  * Application view/page names
  */
-export type ViewName = 'dashboard' | 'calendar' | 'tasks' | 'progress' | 'timer';
+export type ViewName = 'dashboard' | 'calendar' | 'tasks' | 'progress' | 'timer' | 'flashcards';
 
 /**
  * Form validation result

@@ -8,23 +8,37 @@ import { Trophy } from "lucide-react";
 
 function TimerPage(): React.ReactElement {
   const [preset, setPreset] = useState<"25/5" | "50/10">("25/5");
-  const { sessions } = useSessions();
+  const { sessions, addSession } = useSessions();
   const pomodoro = usePomodoro(preset);
   const { addXP } = useGamification();
   const lastSessionCount = useRef(pomodoro.sessionCount);
   const [showXPToast, setShowXPToast] = useState(false);
 
-  // Gamification Logic: Detect session completion
+  // Gamification & Persistence Logic: Detect session completion
   useEffect(() => {
     if (pomodoro.sessionCount > lastSessionCount.current) {
-      // Award XP based on preset duration (approx 1 XP per minute of focus)
+      // Award XP
       const earnedXP = preset === '25/5' ? 25 : 50;
       addXP(earnedXP);
       setShowXPToast(true);
       setTimeout(() => setShowXPToast(false), 3000);
+
+      // Persist Session
+      const duration = preset === '25/5' ? 25 : 50;
+      const now = new Date();
+      const startTime = new Date(now.getTime() - duration * 60000);
+
+      addSession({
+        title: `${preset} Focus Session`,
+        subject: pomodoro.state.subject || 'Science', // Default if none selected
+        start: startTime.toISOString(),
+        end: now.toISOString(),
+        notes: `Completed ${duration}m focus session via timer.`,
+      });
+
       lastSessionCount.current = pomodoro.sessionCount;
     }
-  }, [pomodoro.sessionCount, preset, addXP]);
+  }, [pomodoro.sessionCount, preset, addXP, addSession, pomodoro.state.subject]);
 
   const handlePresetChange = (newPreset: "25/5" | "50/10") => {
     setPreset(newPreset);

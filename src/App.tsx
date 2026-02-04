@@ -1,7 +1,10 @@
 ﻿import { useState } from "react";
 import { Layout } from "./components";
 import { DashboardPage, CalendarPage, TasksPage, ProgressPage, TimerPage } from "./pages";
+import FlashcardsPage from "./pages/FlashcardsPage";
 import type { ViewName } from "./types";
+import { ToastProvider } from "./components/ui/Toast";
+import { AnimatedBackground } from "./components/ui/AnimatedBackground";
 import "./styles/global.css";
 
 function App(): React.ReactElement {
@@ -19,15 +22,20 @@ function App(): React.ReactElement {
         return <ProgressPage />;
       case "timer":
         return <TimerPage />;
+      case "flashcards":
+        return <FlashcardsPage />;
       default:
         return <DashboardPage />;
     }
   };
 
   return (
-    <Layout currentView={currentView} onNavigate={setCurrentView}>
-      {renderPage()}
-    </Layout>
+    <ToastProvider>
+      <AnimatedBackground />
+      <Layout currentView={currentView} onNavigate={setCurrentView}>
+        {renderPage()}
+      </Layout>
+    </ToastProvider>
   );
 }
 

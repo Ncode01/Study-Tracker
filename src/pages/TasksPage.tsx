@@ -1,12 +1,13 @@
 ﻿import { useState, useMemo } from "react";
 import { TaskList, TaskForm } from "../components/tasks";
-import { useTasks } from "../hooks";
+import { useTasks, useGamification } from "../hooks";
 import { SUBJECTS } from "../types";
 import type { Subject, Priority, Task } from "../types";
 import type { CreateTaskData } from "../hooks/useTasks";
-import { useGamification } from "../hooks/useGamification";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Filter, Trophy } from "lucide-react";
+import { GradientButton } from "../components/ui/GradientButton";
+import { useToast } from "../components/ui/Toast";
 
 function TasksPage(): React.ReactElement {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -17,7 +18,7 @@ function TasksPage(): React.ReactElement {
 
   const { tasks, addTask, toggleTask, deleteTask, updateTask } = useTasks();
   const { addXP } = useGamification();
-  const [showXPToast, setShowXPToast] = useState(false);
+  const { addToast } = useToast();
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
@@ -32,8 +33,10 @@ function TasksPage(): React.ReactElement {
     if (editingTask) {
       updateTask(editingTask.id, data);
       setEditingTask(null);
+      addToast({ type: 'success', title: 'Task Updated' });
     } else {
       addTask(data);
+      addToast({ type: 'success', title: 'Task Created' });
     }
     setIsFormOpen(false);
   };
@@ -51,36 +54,19 @@ function TasksPage(): React.ReactElement {
   const handleToggleTask = (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
     if (task && !task.completed) {
-      // Award XP for completing a task
       addXP(10);
-      setShowXPToast(true);
-      setTimeout(() => setShowXPToast(false), 3000);
+      addToast({
+        type: 'xp',
+        title: 'Task Complete!',
+        message: '+10 XP',
+        icon: <Trophy className="text-yellow-400" size={24} />
+      });
     }
     toggleTask(taskId);
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 relative pb-20">
-      {/* XP Toast */}
-      <AnimatePresence>
-        {showXPToast && (
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed bottom-10 right-10 z-50 bg-accent text-accent-foreground px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 border-2 border-yellow-400"
-          >
-            <div className="p-2 bg-yellow-400/20 rounded-full">
-              <Trophy size={24} className="text-yellow-600 dark:text-yellow-300" />
-            </div>
-            <div>
-              <h4 className="font-bold text-lg">Task Complete!</h4>
-              <p className="font-medium">+10 XP</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
@@ -90,24 +76,20 @@ function TasksPage(): React.ReactElement {
             Manage your study goals
           </div>
         </div>
-        <button
-          onClick={() => setIsFormOpen(true)}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
-        >
-          <Plus size={20} />
+        <GradientButton onClick={() => setIsFormOpen(true)} icon={<Plus size={20} />}>
           New Task
-        </button>
+        </GradientButton>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 bg-card p-4 rounded-xl border border-border shadow-sm">
+      <div className="flex flex-wrap items-center gap-3 bg-white/5 border border-white/10 p-4 rounded-xl shadow-sm">
         <div className="flex items-center gap-2 text-muted-foreground mr-2">
           <Filter size={16} />
           <span className="text-sm font-medium">Filter</span>
         </div>
 
         <select
-          className="bg-muted px-3 py-1.5 rounded-lg text-sm border-none focus:ring-1 focus:ring-primary"
+          className="bg-zinc-900 border border-white/10 text-white px-3 py-1.5 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
           value={subjectFilter}
           onChange={(e) => setSubjectFilter(e.target.value as Subject | "all")}
         >
@@ -118,7 +100,7 @@ function TasksPage(): React.ReactElement {
         </select>
 
         <select
-          className="bg-muted px-3 py-1.5 rounded-lg text-sm border-none focus:ring-1 focus:ring-primary"
+          className="bg-zinc-900 border border-white/10 text-white px-3 py-1.5 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none"
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value as Priority | "all")}
         >
@@ -142,7 +124,7 @@ function TasksPage(): React.ReactElement {
         </label>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm min-h-[400px]">
+      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 shadow-xl min-h-[400px]">
         {filteredTasks.length > 0 ? (
           <TaskList
             tasks={filteredTasks}
@@ -152,8 +134,8 @@ function TasksPage(): React.ReactElement {
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground">
-            <div className="bg-muted/50 p-6 rounded-full mb-4">
-              <Trophy size={48} className="text-muted-foreground/50" />
+            <div className="bg-white/5 p-6 rounded-full mb-4">
+              <Trophy size={48} className="text-muted-foreground/30" />
             </div>
             <p className="font-medium text-lg">All caught up!</p>
             <p className="text-sm">No tasks match your filters.</p>
@@ -164,37 +146,33 @@ function TasksPage(): React.ReactElement {
       {/* Modal Overlay */}
       <AnimatePresence>
         {isFormOpen && (
-          <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={handleCloseForm}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={handleCloseForm}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-zinc-900 w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl p-6"
             >
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                onClick={(e) => e.stopPropagation()}
-                className="bg-card w-full max-w-lg rounded-2xl border border-border shadow-2xl overflow-hidden"
-              >
-                <div className="p-6 border-b border-border bg-muted/20 flex justify-between items-center">
-                  <h2 className="text-xl font-bold">{editingTask ? "Edit Task" : "New Task"}</h2>
-                  <button onClick={handleCloseForm} className="text-muted-foreground hover:text-foreground">
-                    <Plus className="rotate-45" size={24} />
-                  </button>
-                </div>
-                <div className="p-6">
-                  <TaskForm
-                    onSubmit={handleAddTask}
-                    onCancel={handleCloseForm}
-                    task={editingTask}
-                  />
-                </div>
-              </motion.div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold">{editingTask ? "Edit Task" : "New Task"}</h2>
+                <button onClick={handleCloseForm} className="opacity-50 hover:opacity-100 transition-opacity">
+                  <Plus className="rotate-45" />
+                </button>
+              </div>
+              <TaskForm
+                onSubmit={handleAddTask}
+                onCancel={handleCloseForm}
+                task={editingTask}
+              />
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

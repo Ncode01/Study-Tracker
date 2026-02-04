@@ -5,6 +5,7 @@ import type { CreateSessionData } from "../hooks/useSessions";
 import type { CalendarEvent } from "../types";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus } from "lucide-react";
+import { GradientButton } from "../components/ui/GradientButton";
 
 function CalendarPage(): React.ReactElement {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -49,16 +50,12 @@ function CalendarPage(): React.ReactElement {
           </h1>
           <p className="text-muted-foreground">Manage your study sessions</p>
         </div>
-        <button
-          onClick={() => setIsFormOpen(true)}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
-        >
-          <Plus size={20} />
+        <GradientButton onClick={() => setIsFormOpen(true)} icon={<Plus size={20} />}>
           Add Session
-        </button>
+        </GradientButton>
       </div>
 
-      <div className="flex-1 bg-card border border-border rounded-xl p-4 shadow-sm overflow-hidden">
+      <div className="flex-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl overflow-hidden glass-card">
         <StudyCalendar
           events={calendarEvents}
           onSelectSlot={handleSelectSlot}
@@ -78,15 +75,17 @@ function CalendarPage(): React.ReactElement {
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-card w-full max-w-lg rounded-xl border border-border shadow-2xl p-6"
+              className="bg-zinc-900 w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl p-6"
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold">Plan Study Session</h2>
-                <button onClick={handleCloseForm}><Plus className="rotate-45" /></button>
+                <button onClick={handleCloseForm} className="opacity-50 hover:opacity-100 transition-opacity">
+                  <Plus className="rotate-45" />
+                </button>
               </div>
               <SessionForm
                 onSubmit={handleAddSession}

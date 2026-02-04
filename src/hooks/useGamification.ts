@@ -74,6 +74,7 @@ export function useGamification() {
     return {
         xp: state.xp,
         level,
+        currentStreak: state.streak,
         progress: Math.min(100, Math.max(0, progressToNextLevel)),
         addXP,
     };

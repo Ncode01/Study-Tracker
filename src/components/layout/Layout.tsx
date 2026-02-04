@@ -9,7 +9,8 @@ import {
   BarChart2,
   Timer,
   Menu,
-  X
+  X,
+  BookOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
@@ -29,6 +30,7 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps): Reac
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'tasks', label: 'Tasks', icon: CheckSquare },
     { id: 'progress', label: 'Progress', icon: BarChart2 },
+    { id: 'flashcards', label: 'Flashcards', icon: BookOpen },
     { id: 'timer', label: 'Focus Timer', icon: Timer },
   ] as const;
 
